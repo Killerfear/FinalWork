@@ -2,12 +2,11 @@ var co = require('co');
 var mongo = require('../lib/mongo-extend');
 var ObjectId = require('mongodb').ObjectId;
 var redis = require('../lib/redis-extend');
-var bcrpyt = require('bcrpyt');
+var bcrypt = require('bcrypt');
 
-module.exports = User;
 
 exports.getByName = co.wrap(function * (name) {
-	var user = yield mongo.findOne("User", { username: name }, {select: { _id: 0 });
+	var user = yield mongo.findOne("User", { username: name }, {select: { _id: 0 }});
 	return user;
 });
 
@@ -24,7 +23,7 @@ exports.getById = co.wrap(function * (id) {
 exports.authenticate = co.wrap(function*(name, pass) {
 	var user = yield User.getByName(name);
 	if (user) {
-		var haxi = yield bcrpyt.hash(pass, user.salt);
+		var haxi = yield bcrypt.hash(pass, user.salt);
 		if (haxi != user.password) user = "";
 	}
 	return user;
