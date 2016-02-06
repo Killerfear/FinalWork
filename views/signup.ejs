@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+	<form action='/user/signup' method='post'>
+		<p><input type='text' name='username' placeholder='用户名' /></p>
+		<p><input type='password' name='password' placeholder='密码' /></p>
+		<p><input type='password' name='reppassword' placeholder='重复密码' /></p>
+		<p><input type='text' name='nickname' placeholder='签名' /></p>
+		<p><input type='text' name='email' placeholder='邮箱' /></p>
+		<p><input type='radio' name='gender' value='男' />男<br /><input type='radio' name='gender' value='女' />女</p>
+		<p><input type='submit' value='注册' /></p>
+	</form>
+	<a href='/user/signup'>注册</a>
+  </body>
+</html>
