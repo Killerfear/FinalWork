@@ -29,12 +29,12 @@ exports.authenticate = co.wrap(function*(name, pass) {
 	return user;
 });
 
-exports.getByToken = co.wrap(function * (token) {
-	var userId = yield redis.Get('token', token);
-	var user = exports.getById(userId);
+exports.getBySession = co.wrap(function * (session) {
+	var user;
+	if (session && session.userId) {
+		var user = exports.getById(session.userId);
+	}
 	return user;
 });
-
-
 
 
