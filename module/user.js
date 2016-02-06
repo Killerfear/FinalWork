@@ -21,7 +21,7 @@ exports.getById = co.wrap(function * (id) {
 });
 
 exports.authenticate = co.wrap(function*(name, pass) {
-	var user = yield User.getByName(name);
+	var user = yield exports.getByName(name);
 	if (user) {
 		var haxi = yield bcrypt.hash(pass, user.salt);
 		if (haxi != user.password) user = "";
