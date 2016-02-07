@@ -6,7 +6,7 @@ var bcrypt = require('bcrypt');
 
 
 exports.getByName = co.wrap(function * (name) {
-	var user = yield mongo.findOne("User", { username: name }, {select: { _id: 0 }});
+	var user = yield mongo.findOne("User", { username: name });
 	return user;
 });
 
@@ -21,9 +21,11 @@ exports.getById = co.wrap(function * (id) {
 });
 
 exports.authenticate = co.wrap(function*(name, pass) {
+	console.log('name:', name, 'pass:', pass);
 	var user = yield exports.getByName(name);
+	console.log(user);
 	if (user) {
-		var haxi = yield bcrypt.hash(pass, user.salt);
+		var haxi = bcrypt.hashSync(pass, user.salt);
 		if (haxi != user.password) user = "";
 	}
 	return user;

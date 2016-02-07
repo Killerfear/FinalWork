@@ -11,6 +11,7 @@ var csrf = require('csurf');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var problemset = require('./routes/problemset');
 
 var app = express();
 
@@ -30,16 +31,23 @@ app.use(cookieParser('oiwejopepw;'));
 app.use(session({
 	secret: 'randomstr',
 	store: new redisStore(),
-	cookie: { httpOnly: true, maxAge: hour * 5 },
+	cookie: { httpOnly: true, maxAge: hour * 100 },
 	resave: false,
 	saveUninitialized: true
 }));
-app.use(csrf());
+//app.use(csrf());
 
 app.use(express.static(path.join(__dirname, 'public')));
+/*
+app.use(function(req, res, next) { 
+	res.locals.csrf = req.csrfToken ? req.csrfToken() : '';
+	next();
+});
+*/
 
 app.use('/', routes);
 app.use('/user', users);
+app.use('/problemset', problemset);
 
 
 // catch 404 and forward to error handler
