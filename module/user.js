@@ -31,8 +31,8 @@ exports.authenticate = co.wrap(function*(name, pass) {
 
 exports.getBySession = co.wrap(function * (session) {
 	var user;
-	if (session && session.userId) {
-		var user = exports.getById(session.userId);
+	if (session && session.uid) {
+		var user = exports.getById(session.uid);
 	}
 	return user;
 });

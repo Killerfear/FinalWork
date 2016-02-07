@@ -10,4 +10,8 @@ router.get('/user/signup', function(req, res, next) {
 	res.render('signup', { title: '注册' });
 });
 
+router.get('/problemset/edit', function(req, res, next) {
+	res.render('edit', { title: '题目编辑' });
+});
+
 module.exports = router;

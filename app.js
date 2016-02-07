@@ -23,9 +23,10 @@ app.set('view engine', 'ejs');
 var hour = 60 * 60 * 1000;
 
 app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser('any secret'));
+app.use(bodyParser.json({limit : 32 * 1024 /*32kb*/}));
+app.use(bodyParser.urlencoded({ extended: false,limit : 1024 * 1024 }));
+app.use(bodyParser.raw({ limit : 1024 * 1024 }));
+app.use(cookieParser('oiwejopepw;'));
 app.use(session({
 	secret: 'randomstr',
 	store: new redisStore(),
