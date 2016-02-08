@@ -1,25 +1,16 @@
 
 var express = require('express');
 var router = express.Router();
-var User = require('../lib/user');
+var User = require('../module/user');
+var _ = require('underscore');
+
+var x = 111;
+x = parseInt(x);
+console.log(x);
+console.log(_.isEmpty(x));
+
+x = 0;
+console.log(_.isEmpty(x));
 
 
-/* GET users listing. */
 
-for (var i = 0; i < 100000; ++i) {
-  var user = new User({
-	username : "jfieicjxyt1",
-	password : "93jcnxka39"
-  });
-
-  user.hashPassword(function(err) {
-	if (err) throw err;
-	console.log(i);
-  });
-
-}
-
-console.log('finish');
-
-
-module.exports = router;

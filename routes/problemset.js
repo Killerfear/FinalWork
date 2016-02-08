@@ -3,6 +3,9 @@ var router = express.Router();
 var co = require('co');
 var fs = require('fs');
 var _ = require('underscore');
+var multer = require('multer');
+var upload = multer({dest: 'uploads/' });
+
 
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
@@ -65,7 +68,7 @@ router.post('/description/update', function(req, res, next) {
 
 		if (!user || !user.isAdmin) throw { message: "会话失效" }
 
-		var setter = _.pick(req.body, 'title', 'description', 'input', 'output', 'sampleInput', 'sampleOutput');
+		var setter = _.pick(req.body, 'title', 'description', 'input', 'output', 'sampleInput', 'sampleOutput', 'isHidden');
 
 		var problemId = parseInt(req.body.problemId);
 		yield mongo.findOneAndUpdate('Problem', { _id: problemId }, { $set: setter });
@@ -86,6 +89,33 @@ router.post('/description/update', function(req, res, next) {
 		return { title : req.baseUrl + req.path }
 	}));
 });
+
+//添加题目测试数据
+router.post('/sample/add', upload.single('file'), function(req, res, next) {
+	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+		var file = req.file;
+		if (!file) throw { message: "参数缺失" }
+
+		var user = yield User.getBySession(req.session);
+		console.log(user);
+		if (!user || !user.isAdmin) throw { message: "会话失效" }
+
+		var path = './problem/' + req.body.problemId + '/' + file.originalname;
+		console.log(path);
+
+		var err = fs.renameSync(file.path, path);
+		console.log(err);
+
+		yield mongo.findOneAndUpdate('Problem', { _id: parseInt(req.body.problemId) }, { $addToSet: { file: file.originalname } });
+
+		return { title : req.baseUrl + req.path }
+	}));
+	
+});
+
+
+
+
 
 
 

@@ -14,4 +14,8 @@ router.get('/problemset/edit', function(req, res, next) {
 	res.render('edit', { title: '题目编辑' });
 });
 
+router.get('/problemset/sample/', function(req, res, next) {
+	res.render('sample', { title: '题目数据' });
+});
+
 module.exports = router;
