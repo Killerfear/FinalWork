@@ -12,19 +12,13 @@ var LogicHandler = require('../lib/logic-handler');
 var mongo = require('../lib/mongo-extend');
 
 
-router.get('/problem', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
-
-	}));
-});
-
 //新增题目描述
 router.post('/description/add', function(req, res, next) {
 	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
-		var user = yield User.getBySession(req.session);
+		var user = req.user;
 		console.log(user);
 
-		if (!user || !user.isAdmin) throw { message: "会话无效" }
+		if (!user.isAdmin) throw { message: "无权限" }
 
 		var param = req.body;
 
@@ -63,10 +57,10 @@ router.post('/description/add', function(req, res, next) {
 //修改题目描述
 router.post('/description/update', function(req, res, next) {
 	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
-		var user = yield User.getBySession(req.session);
+		var user = req.user;
 		console.log(user);
 
-		if (!user || !user.isAdmin) throw { message: "会话失效" }
+		if (!user.isAdmin) throw { message: "无权限" }
 
 		var setter = _.pick(req.body, 'title', 'description', 'input', 'output', 'sampleInput', 'sampleOutput', 'isHidden');
 
@@ -96,9 +90,9 @@ router.post('/sample/add', upload.single('file'), function(req, res, next) {
 		var file = req.file;
 		if (!file) throw { message: "参数缺失" }
 
-		var user = yield User.getBySession(req.session);
+		var user = req.user;
 		console.log(user);
-		if (!user || !user.isAdmin) throw { message: "会话失效" }
+		if (!user.isAdmin) throw { message: "无权限" }
 
 		var path = './problem/' + req.body.problemId + '/' + file.originalname;
 		console.log(path);
@@ -108,6 +102,8 @@ router.post('/sample/add', upload.single('file'), function(req, res, next) {
 
 		yield mongo.findOneAndUpdate('Problem', { _id: parseInt(req.body.problemId) }, { $addToSet: { file: file.originalname } });
 
+		fs.unlinkSync(file.path);
+
 		return { title : req.baseUrl + req.path }
 	}));
 	
@@ -116,9 +112,9 @@ router.post('/sample/add', upload.single('file'), function(req, res, next) {
 //删除题目测试数据
 router.post('/sample/delete', function(req, res, next) {
 	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
-		var user = yield User.getBySession(req.session);
+		var user = req.user;
 
-		if (!user || !user.isAdmin) throw { message: "会话失效" };
+		if (!user.isAdmin) throw { message: "无权限" }
 
 		var id = req.body.problemId;
 		var name = req.body.file;
@@ -135,7 +131,49 @@ router.post('/sample/delete', function(req, res, next) {
 });
 
 
+//获取题目列表
+router.get('/', function(req, res, next) {
+	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+		var user = req.user;
 
+		var skip = req.query.skip, limit = req.query.limit;
+
+		var problems = yield mongo.find('Problem', { }, { skip: skip, limit: limit, select: { _id: 1, title: 1 }});
+
+		var solved = user.solved;
+		var unsolved = user.unsolved;
+
+		solved.sort();
+		unsolved.sort();
+
+		var j = 0, k = 0;
+		for (var i = 0; i < problems.length; ++i) {
+			var problem = problems[i];
+			while (j < solved.length && solved[j] < problem._id) ++j;
+			while (k < unsolved.length && unsolved[k] < problem._id) ++k;
+
+			if (j < solved.length && solved[j] == problem._id) problem.state = 1;
+			else if (k < unsolved.length && unsolved[k] == problem._id) problem.state = 2;
+			else problem.state = 0;
+		}
+
+		return { title: problems }
+	}));
+});
+
+//获取题目描述
+router.get('/problem', function(req, res, next) {
+	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+		var user = req.user;
+		var problemId = req.query.problemId;
+		var problem = yield mongo.findOne('Problem', { _id: parseInt(problemId) });
+
+		if (!problem || (!user.isAdmin && problem.isHidden)) throw { message: "题目不存在" }
+
+		console.log(problem);
+		return problem;
+	}));
+});
 
 
 

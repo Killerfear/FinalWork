@@ -37,6 +37,8 @@ router.post('/login', function(req, res, next) {
 		console.log(user);
 		if (!user) throw { message: "帐号或密码错误" };
 
+		if (req.session) req.session.regenerate(function(err) { console.log(err) });
+
 		req.session.uid = user._id;
 
 		req.session.save();

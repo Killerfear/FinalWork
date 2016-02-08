@@ -30,7 +30,7 @@ app.use(bodyParser.raw({ limit : 1024 * 1024 }));
 app.use(cookieParser('oiwejopepw;'));
 app.use(session({
 	secret: 'randomstr',
-	store: new redisStore(),
+	store: new redisStore({ prefix: 'sid'}),
 	cookie: { httpOnly: true, maxAge: hour * 100 },
 	resave: false,
 	saveUninitialized: true
