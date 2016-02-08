@@ -113,8 +113,26 @@ router.post('/sample/add', upload.single('file'), function(req, res, next) {
 	
 });
 
+//删除题目测试数据
+router.post('/sample/delete', function(req, res, next) {
+	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+		var user = yield User.getBySession(req.session);
 
+		if (!user || !user.isAdmin) throw { message: "会话失效" };
 
+		var id = req.body.problemId;
+		var name = req.body.file;
+
+		var filePath = './problem/' + id + '/' + name;
+		var err = fs.unlinkSync(filePath);
+
+		if (err) throw { message: "删除文件失败", err: err };
+
+		yield mongo.findOneAndUpdate('Problem', { _id: parseInt(id) }, { $pull: { file: name } });
+
+		return { title : req.baseUrl + req.path }
+	}));
+});
 
 
 
