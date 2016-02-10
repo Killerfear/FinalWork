@@ -4,6 +4,8 @@ var co = require('co');
 var fs = require('fs');
 var _ = require('underscore');
 var multer = require('multer');
+
+
 var upload = multer({dest: 'uploads/' });
 
 
@@ -174,6 +176,21 @@ router.get('/problem', function(req, res, next) {
 		return problem;
 	}));
 });
+
+router.post('/submit', function(req, res, next) {
+	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+		var user = req.user;
+		var problemId = req.query.problemId;
+		var problem = yield mongo.findOne('Problem', { _id: parseInt(problemId) });
+
+		if (!problem || (!user.isAdmin && problem.isHidden)) throw { message: "题目不存在" }
+
+
+	}));
+	
+});
+
+
 
 
 
