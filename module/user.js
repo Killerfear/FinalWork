@@ -40,3 +40,13 @@ exports.getBySession = co.wrap(function * (session) {
 });
 
 
+exports.updateByName = co.wrap(function * (user, option) {
+	if (!option) option = {};
+	return yield mongo.findOnAndUpdate('User', _.pick(user.username, user._id), { $set: user }, option);
+});
+
+exports.create = co.wrap(function * (user) {
+	return yield mongo.insert('User', user);
+});
+
+

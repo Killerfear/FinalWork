@@ -8,7 +8,6 @@ var _ = require('underscore');
 
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
-var mongo = require('../lib/mongo-extend');
 
 var legalUsername = co.wrap(function * (text) {
 	text = text.toLower();
@@ -78,11 +77,16 @@ router.post('/signup', function(req, res, next) {
 		user.nickname = body.nickname;
 		user.email = body.email;
 		user.gender = body.gender;
+		user.ip = req.ip;
+		user.submit = [];
+		user.sovled = [];
+		user.registTime = new Date().getTime();
+		
 
 		user.salt = bcrypt.genSaltSync();
 		user.password = bcrypt.hashSync(user.password, user.salt);
 
-		yield mongo.addOne("User", user);
+		yield User.save(user);
 		return {};
 	}));
 });
@@ -106,7 +110,9 @@ router.post('/profile', function(req, res, next) {
 		if (!user) throw { message: "会话失效" }
 		var setter = _.pick(req.body, 'nickname', 'email', 'gender');
 
-		user = yield mongo.findOneAndUpdate({ username: user.username }, { $set: setter }, { returnOriginal: false });
+		user = _.extend(user, setter);
+		
+		user = yield User.update(user, { returnOriginal: false });
 		user = user.value;
 		return user;
 	}));
@@ -128,11 +134,11 @@ router.post('/profile/password', function(req, res, next) {
 		if (haxiPass != user.password) throw { message: "密码错误" }
 
 		user.password = body.newPass;
-		user.salt = yield bcrypt.genSalt();
-		user.password = yield bcrypt.hash(user.password, user.salt);
+		user.salt = bcrypt.genSaltSync();
+		user.password = bcrypt.hashSync(user.password, user.salt);
 
 		user = _.pick(user, 'password', 'salt');
-		yield mongo.updateOne(user, { $set: user });
+		yield User.update(user);
 		return { };
 	}));
 });

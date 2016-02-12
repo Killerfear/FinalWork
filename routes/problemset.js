@@ -4,6 +4,13 @@ var co = require('co');
 var fs = require('fs');
 var _ = require('underscore');
 var multer = require('multer');
+var io = require('socket.io-client');
+
+var socket = io.connect('127.0.0.1:33445');
+
+
+socket.on('connect', function() {});
+
 
 
 var upload = multer({dest: 'uploads/' });
@@ -42,13 +49,12 @@ router.post('/description/add', function(req, res, next) {
 		err = fs.writeFileSync(path + '/sample.out', sampleOutput, 'utf-8');
 		if (err) throw err;
 
-		var problem = _.pick(param, 'title', 'description', 'input', 'output', 'sampleInput', 'sampleOutput');
+		var problem = _.pick(param, 'title', 'description', 'input', 'output', 'sampleInput', 'sampleOutput', 'isHidden');
 		problem._id = id;
 
-		problem.file = Array();
-		problem.file.push('sample.in');
-		problem.file.push('sample.out');
-		problem.isHidden = true;
+		problem.files = [];
+		problem.files.push('sample.in');
+		problem.files.push('sample.out');
 
 		yield mongo.addOne('Problem', problem);
 
@@ -102,7 +108,7 @@ router.post('/sample/add', upload.single('file'), function(req, res, next) {
 		var err = fs.renameSync(file.path, path);
 		console.log(err);
 
-		yield mongo.findOneAndUpdate('Problem', { _id: parseInt(req.body.problemId) }, { $addToSet: { file: file.originalname } });
+		yield mongo.findOneAndUpdate('Problem', { _id: parseInt(req.body.problemId) }, { $addToSet: { files: file.originalname } });
 
 		fs.unlinkSync(file.path);
 
@@ -126,7 +132,7 @@ router.post('/sample/delete', function(req, res, next) {
 
 		if (err) throw { message: "删除文件失败", err: err };
 
-		yield mongo.findOneAndUpdate('Problem', { _id: parseInt(id) }, { $pull: { file: name } });
+		yield mongo.findOneAndUpdate('Problem', { _id: parseInt(id) }, { $pull: { files: name } });
 
 		return { title : req.baseUrl + req.path }
 	}));
@@ -177,20 +183,36 @@ router.get('/problem', function(req, res, next) {
 	}));
 });
 
+//提交代码
 router.post('/submit', function(req, res, next) {
 	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
 		var user = req.user;
 		var problemId = req.query.problemId;
-		var problem = yield mongo.findOne('Problem', { _id: parseInt(problemId) });
+		var problem = yield mongo.findOne('Problem', { _id: parseInt(problemId) }, { select: { files: 1 } });
 
 		if (!problem || (!user.isAdmin && problem.isHidden)) throw { message: "题目不存在" }
 
 
+		var srcCode = req.body.srcCode;
+		var solId = yield mongo.findOneAndUpdate('Stat', { name: 'solution' }, { select: { _id: 0, count: 1 } });
+		solId = solId.count;
+
+		var solution = {
+			_id: solId,
+			ip: req.ip,
+			memory: 0,
+			time: 0,
+			submitTime: new Date().getTime(),
+			codeLength: srcCode.length.toString() + 'B', 
+			result: -1,
+		}
+
+		yield mongo.insert('Solution',solution);
+
+		socket.emit('judge', { solutionId: solution._id, srcCode: srcCode, problem.files });
+		return { title: req.baseUrl + req.path };
 	}));
-	
 });
-
-
 
 
 
