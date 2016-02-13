@@ -1,12 +1,42 @@
 var co = require('co');
-var exec = require('bluebird').promisify(require('child_process').exec);
+var child_process = require('child_process');
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
 var mongo = require('./lib/mongo-extend');
 var judge = require('./lib/judge');;
 
+var OJ_PENDING = 0;
+var OJ_COMPILE = 1;
+var OJ_RUNNING = 2;
+var OJ_CE = 2;
+var OJ_RE = 3;
+var OJ_MLE = 4;
+var OJ_TLE = 5;
+var OJ_OUTPUTLIMIT = 6;
+var OJ_AC = 7;
+var OJ_WA = 8;
+var OJ_PE = 9;
+
+
+
+function compile(srcCode)
+{
+	child_process.execSync("echo -e \"" + srcCode + "\" > Main.cc");
+	var options = {
+		timeout: 60 * 1000, //60s
+		maxBuffer: 100 * 1024, 	//100KB
+		encoding: utf8
+	};
+	var ce = child_process.execSync("g++ Main.cc -o Main -lm -O3 -DONLINE_JUDGE --static", options);
+	return ce;
+}
+
 if (cluster.isMaster) {
 	//master
+
+	process.chdir(__dirname);
+	child_process.execSync("rm -rf run*");
+
 	var workers = [];
 	for (var i = 0; i < numCPUs; ++i) {
 		workers.push({ worker: cluster.fork(), used: 0});
@@ -15,22 +45,9 @@ if (cluster.isMaster) {
 	var io = require('socket.io')(33445);
 
 	io.on('connect', function(socket) {
-		socket.on('judge', co.wrap(function * (submit) {
+		socket.on('judge', function (submit) {
 			var worker = _.min(workers, function(data) { return data.used; });
 			++worker.used;
-
-			var solId = yield mongo.findOneAndUpdate('Stat', { name: 'solution' }, { $inc: {count : 1 }});
-			solId = solId.count;
-
-			var solution = { 
-				date: new Date().getTime(), 
-				result: 0, 
-				username: submit.username, 
-				_id: solId
-			}
-			
-			yield mongo.addOne('Solution', solution);
-			submit.solid = solId;
 			worker.worker.send(submit);
 		}));
 	});
@@ -41,10 +58,23 @@ if (cluster.isMaster) {
 	});
 } else {
 	//worker
-	process.on('message', co.wrap(function * (submit) {
-		var result = judge(submit.src, submit.problemId, submit.judgeType);
 
-		yield mongo.findOneAndUpdate('Solution', { _id: submit.solid }, { $set: { result });
+	var workDir = __dirname + "/run" + process.pid;
+	child_process.execSync("mkdir " + workDir); 
+	process.chdir(workDir);
+
+	process.on('message', co.wrap(function * (submit) {
+		yield mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set: { result: OJ_COMPILE } });
+		var ce = compile(submit.src);
+
+		if (ce) {
+			yield mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set: { result: OJ_CE, ceInfo: ce } });
+		} else {
+			yield mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set: { result: OJ_RUNNING });
+			var result = judge(workDir, submit.files, submit.memLimit, submit.timeLimit, submit.judgeType);
+			yield mongo.findOneAndUpdate('Solution', { _id: submit.solid }, { $set: { result });
+		}
+
 		process.send({ pid: process.pid});
 	}));
 }
