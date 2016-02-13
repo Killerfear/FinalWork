@@ -52,10 +52,6 @@ router.post('/description/add', function(req, res, next) {
 		var problem = _.pick(param, 'title', 'description', 'input', 'output', 'sampleInput', 'sampleOutput', 'isHidden');
 		problem._id = id;
 
-		problem.files = [];
-		problem.files.push('sample.in');
-		problem.files.push('sample.out');
-
 		yield mongo.addOne('Problem', problem);
 
 		return { title: req.baseUrl + req.path }
@@ -108,8 +104,6 @@ router.post('/sample/add', upload.single('file'), function(req, res, next) {
 		var err = fs.renameSync(file.path, path);
 		console.log(err);
 
-		yield mongo.findOneAndUpdate('Problem', { _id: parseInt(req.body.problemId) }, { $addToSet: { files: file.originalname } });
-
 		fs.unlinkSync(file.path);
 
 		return { title : req.baseUrl + req.path }
@@ -132,8 +126,6 @@ router.post('/sample/delete', function(req, res, next) {
 
 		if (err) throw { message: "删除文件失败", err: err };
 
-		yield mongo.findOneAndUpdate('Problem', { _id: parseInt(id) }, { $pull: { files: name } });
-
 		return { title : req.baseUrl + req.path }
 	}));
 });
@@ -149,7 +141,7 @@ router.get('/', function(req, res, next) {
 		var problems = yield mongo.find('Problem', { }, { skip: skip, limit: limit, select: { _id: 1, title: 1 }});
 
 		var solved = user.solved;
-		var unsolved = user.unsolved;
+		var unsolved = _.difference(user.submit, solved);
 
 		solved.sort();
 		unsolved.sort();
@@ -192,7 +184,6 @@ router.post('/submit', function(req, res, next) {
 
 		if (!problem || (!user.isAdmin && problem.isHidden)) throw { message: "题目不存在" }
 
-
 		var srcCode = req.body.srcCode;
 		var solId = yield mongo.findOneAndUpdate('Stat', { name: 'solution' }, { select: { _id: 0, count: 1 } });
 		solId = solId.count;
@@ -204,12 +195,19 @@ router.post('/submit', function(req, res, next) {
 			time: 0,
 			submitTime: new Date().getTime(),
 			codeLength: srcCode.length.toString() + 'B', 
-			result: -1,
+			result: 0
 		}
 
-		yield mongo.insert('Solution',solution);
+		var promises = [];
+		promises.push(mongo.insert('Solution',solution));
+		
+		if (!_.contains(user.submit, problemId)) {
+			promises.push(mongo.insert('User', { _id: user._id }, { $addToSet: { submit: problemId } }));
+		}
 
-		socket.emit('judge', { solutionId: solution._id, srcCode: srcCode, problem.files });
+		yield promises;
+		
+		socket.emit('judge', { user: user, solutionId: solution._id, srcCode: srcCode, problemId: problemId, judgeType: 0 });
 		return { title: req.baseUrl + req.path };
 	}));
 });
