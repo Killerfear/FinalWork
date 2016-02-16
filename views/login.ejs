@@ -6,8 +6,17 @@
   </head>
   <body>
 	<form action='/user/login' method='post'>
-		<p><input type='text' name='username' placeholder='用户名' /></p>
-		<p><input type='password' name='password' placeholder='密码' /></p>
+		<p>
+			<label>Username</label>
+			<input type='text' name='username' placeholder='用户名' />
+		</p>
+
+		<p>
+			<label>Password</label>
+			<input type='password' name='password' placeholder='密码' />
+			<label><%= pass_error %></label>
+		</p>
+
 		<p><input type='submit' value='登录' /></p>
 	</form>
 	<a href='/user/signup'>注册</a>

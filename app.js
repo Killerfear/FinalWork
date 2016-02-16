@@ -10,8 +10,10 @@ var csrf = require('csurf');
 
 
 var routes = require('./routes/index');
-var users = require('./routes/users');
+var user = require('./routes/user');
 var problemset = require('./routes/problemset');
+var status = require('./routes/status');
+var contest = require('./routes/contest');
 
 var app = express();
 
@@ -47,8 +49,10 @@ app.use(function(req, res, next) {
 */
 
 app.use('/', routes);
-app.use('/user', users);
+app.use('/user', user);
 app.use('/problemset', problemset);
+app.use('/status', status);
+app.use('/contest', contest);
 
 
 // catch 404 and forward to error handler

@@ -165,7 +165,7 @@ router.post('/sample/update', function(req, res, next) {
 	var filePath = __dirname + "/problem/" + problemId + "/" + name;
 
 	var err;
-	if (fs.existsSync(filePath) {
+	if (fs.existsSync(filePath)) {
 		err = fs.writeFileSync(filePath, data, 'utf-8');
 	} else {
 		err = { message: "文件不存在" };
@@ -259,6 +259,8 @@ router.post('/submit', function(req, res, next) {
 
 		var solution = {
 			_id: solId,
+			username: user.username,
+			problemId: problemId,
 			ip: req.ip,
 			memory: 0,
 			time: 0,

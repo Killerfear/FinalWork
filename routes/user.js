@@ -5,7 +5,6 @@ var crypto = require('crypto');
 var bcrypt = require('bcrypt');
 var _ = require('underscore');
 
-
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
 
@@ -21,20 +20,25 @@ var legalUsername = co.wrap(function * (text) {
 	return true;
 });
 
-
-router.get('/', function(req, res, next) {
-	LogicHandler.Handle('login', req, res, next, co.wrap(function * () {
-		return { title: '登录' }
+router.get('/login', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		return { page: 'login', title: '登录' , pass_erro: " " }
 	}));
 });
 
 //登录
 router.post('/login', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		console.log('auth');
 		var user = yield User.authenticate(req.body.username, req.body.password); 
 		console.log(user);
-		if (!user) throw { message: "帐号或密码错误" };
+
+		if (!user) {
+			return {
+				page: 'login',
+				pass_erro: "密码错误"
+			}
+		}
 
 		if (req.session) req.session.regenerate(function(err) { console.log(err) });
 
@@ -42,7 +46,6 @@ router.post('/login', function(req, res, next) {
 
 		req.session.save();
 		console.log(req.session);
-
 
 		var result = { title: user.username };
 		return result;
@@ -72,16 +75,15 @@ router.post('/signup', function(req, res, next) {
 
 		user = {};
 
+		user.ip = req.ip;
+		user.email = body.email;
+		user.submit = [];
+		user.sovled = [];
+		user.gender = body.gender;
 		user.username = body.username;
 		user.password = body.password;
 		user.nickname = body.nickname;
-		user.email = body.email;
-		user.gender = body.gender;
-		user.ip = req.ip;
-		user.submit = [];
-		user.sovled = [];
 		user.registTime = new Date().getTime();
-		
 
 		user.salt = bcrypt.genSaltSync();
 		user.password = bcrypt.hashSync(user.password, user.salt);
@@ -142,8 +144,5 @@ router.post('/profile/password', function(req, res, next) {
 		return { };
 	}));
 });
-
-
-
 
 module.exports = router;
