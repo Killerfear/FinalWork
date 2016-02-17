@@ -6,17 +6,7 @@ var bcrypt = require('bcrypt');
 
 
 exports.getByName = co.wrap(function * (name) {
-	var user = yield mongo.findOne("User", { username: name });
-	return user;
-});
-
-exports.getById = co.wrap(function * (id) {
-	if (typeof id == 'string') {
-		id = ObjectId(id);
-	}
-
-	var user = yield mongo.findOne("User", { _id: id });
-
+	var user = yield mongo.findOne("User", { _id: name });
 	return user;
 });
 
@@ -34,7 +24,7 @@ exports.authenticate = co.wrap(function*(name, pass) {
 exports.getBySession = co.wrap(function * (session) {
 	var user;
 	if (session && session.uid) {
-		var user = exports.getById(session.uid);
+		var user = exports.getByName(session.uid);
 	}
 	return user;
 });
@@ -42,7 +32,7 @@ exports.getBySession = co.wrap(function * (session) {
 
 exports.updateByName = co.wrap(function * (user, option) {
 	if (!option) option = {};
-	return yield mongo.findOnAndUpdate('User', _.pick(user.username, user._id), { $set: user }, option);
+	return yield mongo.findOnAndUpdate('User', { _id: user._id } , { $set: user }, option);
 });
 
 exports.create = co.wrap(function * (user) {

@@ -11,7 +11,7 @@ var ObjectID = require('mongodb').ObjectID;
 
 //获取比赛列表
 router.get('/list',  function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 
 		var param = req.query;
@@ -25,7 +25,7 @@ router.get('/list',  function(req, res, next) {
 
 //获取某一个比赛题目列表
 router.get('/', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 
 		var contestId = req.query.contestId;
@@ -33,7 +33,7 @@ router.get('/', function(req, res, next) {
 		var contest = yield mongo.find('Contest', { _id: ObjectID(contestId) });
 
 		if (!contest || contest.isHidden) throw { message: "比赛不存在" }
-		if (contest.isPrivate && !_.contains(contest.authorizee, user.username)) throw { message: "该比赛是私有的" };
+		if (contest.isPrivate && !_.contains(contest.authorizee, user._id)) throw { message: "该比赛是私有的" };
 			
 		var curTime = new Date().getTime();
 		if (curTime < contest.startTime) throw { message: "比赛未开始" }
@@ -44,7 +44,7 @@ router.get('/', function(req, res, next) {
 
 //获取比赛题目描述
 router.get('/problem', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		//contestId, problemId, 
 		var contestId = req.query.contestId;
@@ -52,7 +52,7 @@ router.get('/problem', function(req, res, next) {
 		var contest = yield mongo.find("Contest", { _id: ObjectID(contestId), problems: problemId });
 
 		if (!contest || contest.isHidden) throw { message: "不存在该比赛或该比赛不存在该题目" }; 
-		if (contest.isPrivate && !_.contains(contest.authorizee, user.username)) throw { message: "该比赛是私有的" };
+		if (contest.isPrivate && !_.contains(contest.authorizee, user._id)) throw { message: "该比赛是私有的" };
 
 		var curTime = new Date().getTime();
 		if (curTime < contest.startTime) throw { message: "比赛未开始" }
@@ -66,7 +66,7 @@ router.get('/problem', function(req, res, next) {
 
 //创建比赛
 router.post('/edit', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		if (!user.isAdmin) throw { message: "无权限" };
 
@@ -81,7 +81,7 @@ router.post('/edit', function(req, res, next) {
 
 //编辑比赛
 router.post('/edit/update',function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		if (!user.isAdmin) throw { message: "无权限" }
 
@@ -98,7 +98,7 @@ router.post('/edit/update',function(req, res, next) {
 
 //删除比赛
 router.get('/edit/delete', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		if (!user.isAdmin) throw { message: "无权限" }
 

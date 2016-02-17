@@ -8,14 +8,14 @@ var judge = require('../judge/build/Release/judge');
 var OJ_PENDING = 0;
 var OJ_COMPILE = 1;
 var OJ_RUNNING = 2;
-var OJ_CE = 2;
-var OJ_RE = 3;
-var OJ_MLE = 4;
-var OJ_TLE = 5;
-var OJ_OUTPUTLIMIT = 6;
-var OJ_AC = 7;
-var OJ_WA = 8;
-var OJ_PE = 9;
+var OJ_CE = 3;
+var OJ_RE = 4;
+var OJ_MLE = 5;
+var OJ_TLE = 6;
+var OJ_OUTPUTLIMIT = 7;
+var OJ_AC = 8;
+var OJ_WA = 9;
+var OJ_PE = 10;
 
 var OJ_RESULT = ['OJ_PENDING', 'OJ_COMPILE', 'OJ_RUNNING', 'OJ_CE', 'OJ_RE', 'OJ_MLE', 'OJ_TLE', 'OJ_OUTPUTL', 'OJ_AC', 'OJ_WA', 'OJ_PE' ];
 

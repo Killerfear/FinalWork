@@ -22,7 +22,7 @@ var legalUsername = co.wrap(function * (text) {
 
 router.get('/login', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		return { page: 'login', title: '登录' , pass_erro: " " }
+		return { page: 'login', title: '登录' }
 	}));
 });
 
@@ -36,7 +36,7 @@ router.post('/login', function(req, res, next) {
 		if (!user) {
 			return {
 				page: 'login',
-				pass_erro: "密码错误"
+				pass_error: "密码错误"
 			}
 		}
 
@@ -47,8 +47,8 @@ router.post('/login', function(req, res, next) {
 		req.session.save();
 		console.log(req.session);
 
-		var result = { title: user.username };
-		return result;
+		res.redirect('/problemset/');
+		console.log('Not pass');
 	}));
 });
 
@@ -80,7 +80,7 @@ router.post('/signup', function(req, res, next) {
 		user.submit = [];
 		user.sovled = [];
 		user.gender = body.gender;
-		user.username = body.username;
+		user._id = body.username;
 		user.password = body.password;
 		user.nickname = body.nickname;
 		user.registTime = new Date().getTime();
@@ -89,7 +89,7 @@ router.post('/signup', function(req, res, next) {
 		user.password = bcrypt.hashSync(user.password, user.salt);
 
 		yield User.save(user);
-		return {};
+		res.redirect('/user/login');
 	}));
 });
 

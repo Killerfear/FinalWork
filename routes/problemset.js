@@ -8,19 +8,13 @@ var io = require('socket.io-client');
 
 var socket = io.connect('127.0.0.1:33445');
 
-
 socket.on('connect', function() {});
 
-
-
 var upload = multer({dest: 'uploads/' });
-
 
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
 var mongo = require('../lib/mongo-extend');
-
-
 
 //新增题目描述
 router.post('/description/add', function(req, res, next) {
@@ -89,6 +83,19 @@ router.post('/description/update', function(req, res, next) {
 	}));
 });
 
+//删除题目描述
+router.get('/description/delete', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var user = req.user;
+
+		if (!user.isAdmin) throw { message: "无权限" }
+
+		var problemId = parseInt(req.query.problemId);
+
+		yield mongo.findOneAndDelete('Problem', { _id: problemId });
+	}));
+});
+
 //获取题目数据列表
 router.get('/samplelist', function(req, res, next) {
 	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
@@ -106,6 +113,8 @@ router.get('/samplelist', function(req, res, next) {
 			dataFile.push(file);
 		});
 
+		dataFile.sort();
+
 		return { title: dataFile };
 	}));
 });
@@ -117,7 +126,7 @@ router.get('/sample', function(req, res, next) {
 		if (!user.isAdmin) throw { message: "无权限" };
 
 		var problemId = req.query.problemId;
-		var fileName = req.query.name;
+		var fileName = req.query.fileName;
 
 		var filePath = __dirname + "/problem/" + problemId + "/" + fileName;
 
@@ -248,10 +257,16 @@ router.get('/problem', function(req, res, next) {
 router.post('/submit', function(req, res, next) {
 	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
 		var user = req.user;
-		var problemId = req.query.problemId;
+		var problemId = parseInt(req.query.problemId);
+		var contestId = parseInt(req.query.contestId);
 		var problem = yield mongo.findOne('Problem', { _id: parseInt(problemId) }, { select: { files: 1 } });
 
-		if (!problem || (!user.isAdmin && problem.isHidden)) throw { message: "题目不存在" }
+		if (!problem || (problem.isHidden && !contestId)) throw { message: "题目不存在" }
+
+		if (problem.isHidden) {
+			var isInContest = yield mongo.findAndCount('Contest', { _id: contestId, problemId: problemId });
+			if (!isInContest) throw { message: "题目不存在" }
+		}
 
 		var srcCode = req.body.srcCode;
 		var solId = yield mongo.findOneAndUpdate('Stat', { name: 'solution' }, { select: { _id: 0, count: 1 } });
@@ -259,13 +274,15 @@ router.post('/submit', function(req, res, next) {
 
 		var solution = {
 			_id: solId,
-			username: user.username,
+			username: user._id,
 			problemId: problemId,
 			ip: req.ip,
 			memory: 0,
 			time: 0,
 			submitTime: new Date().getTime(),
+			srcCode: srcCode,
 			codeLength: srcCode.length.toString() + 'B', 
+			contestId: contestId,
 			result: 0
 		}
 

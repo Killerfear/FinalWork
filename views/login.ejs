@@ -11,14 +11,20 @@
 			<input type='text' name='username' placeholder='用户名' />
 		</p>
 
-		<p>
+		<p id='pass'>
 			<label>Password</label>
 			<input type='password' name='password' placeholder='密码' />
-			<label><%= pass_error %></label>
 		</p>
 
 		<p><input type='submit' value='登录' /></p>
 	</form>
+	<script>
+		if (pass_error) {
+			var pNode = document.createElement('label');
+			pNode.textContent = '密码错误';
+			document.getElementById('pass').appendChild(pNode);
+		}
+	</script>
 	<a href='/user/signup'>注册</a>
   </body>
 </html>
