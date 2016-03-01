@@ -36,7 +36,7 @@ exports.updateByName = co.wrap(function * (user, option) {
 });
 
 exports.create = co.wrap(function * (user) {
-	return yield mongo.insert('User', user);
+	return yield mongo.addOne('User', user);
 });
 
 

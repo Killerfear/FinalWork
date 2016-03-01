@@ -1,18 +1,135 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+	 <meta charset="utf-8">
+	 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	 <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+
+	 <link href="/stylesheets/bootstrap.min.css" rel="stylesheet">
+	 <script type='text/javascript' src='/javascript/jquery.min.js' ></script>
+	 <script type='text/javascript' src='/javascript/bootstrap.js' ></script>
+
+	<style>
+	 body {
+		 padding-top: 60px;
+		 padding-bottom: 40px;
+		 background-color: #eee;
+	 }
+
+	 .form-group {
+		max-width: 330px;
+		padding: 7px;
+		margin: 0 auto;
+	 }
+
+	 .radioStyle {
+		max-width: 330px;
+		padding: 3px;
+		margin: -1px auto;	
+		text-align: left;
+    }
+
+	 .submitBtnStyle {
+		max-width: 330px;
+		padding: 3px;
+		margin: 10px auto;	
+		text-align: center;
+	
+	 }
+
+	 .btn-primary {
+		width: 200px;
+	 }
+
+	.form-signin-heading {
+			margin-bottom: 20px;
+			margin: 10px auto;
+			text-align: center;
+	}
+
+	.form-signin .form-control {
+		position: relative;
+		height: auto;
+				  -webkit-box-sizing: border-box;
+				  box-sizing: border-box;
+		padding: 10px;
+					font-size: 16px;
+	}
+
+	.form-signin .form-control:focus {
+		z-index: 2;
+	}
+	.form-signin input[type="text"] {
+		margin-bottom: 10px;
+		border-bottom-right-radius: 5px;
+		border-bottom-left-radius: 5px;
+		border-top-left-radius: 5px;
+		border-top-right-radius: 5px;
+
+	}
+	.form-signin input[type="password"] {
+		margin-bottom: 10px;
+		border-top-left-radius: 5px;
+		border-top-right-radius: 5px;
+		border-bottom-right-radius: 5px;
+		border-bottom-left-radius: 5px;
+	}
+
+	.alert-danger {
+		padding: 15px;
+		margin-bottom: 10px;
+		margin: 0 auto;
+		max-width: 80%;
+	}
+
+	
+		
+	</style>
   </head>
   <body>
-	<form action='/user/signup' method='post'>
-		<p><input type='text' name='username' placeholder='用户名' /></p>
-		<p><input type='password' name='password' placeholder='密码' /></p>
-		<p><input type='password' name='reppassword' placeholder='重复密码' /></p>
-		<p><input type='text' name='nickname' placeholder='签名' /></p>
-		<p><input type='text' name='email' placeholder='邮箱' /></p>
-		<p><input type='radio' name='gender' value='男' />男<br /><input type='radio' name='gender' value='女' />女</p>
-		<p><input type='submit' value='注册' /></p>
+  	<div class='container-fluid'>
+		<div id='msg-container'>
+			<% for (var i = 0; i < msg.length; ++i) { %>
+				<div class='alert alert-danger'><%= msg[i] %></div><p></p>
+			<% } %>
+
+		</div>
+  
+	<form method='POST' action='/user/signup'>
+	  <h1 class='form-signin-heading'>User Register</h1>
+	  <fieldset class="form-group">
+		 <label for="id-username">Username</label>
+		 <input type="text" name='username' class="form-control" id="id-username" placeholder="Enter username" required autofocus>
+	  </fieldset>
+
+	  <fieldset class="form-group">
+		 <label for="id-password">Password</label>
+		 <input type="password" name='password' class="form-control" id="id-password" placeholder="Password" required>
+	  </fieldset>
+
+	  <fieldset class="form-group">
+		 <label for="id-password">Repeat Password</label>
+		 <input type="password" name='reppassword' class="form-control" id="id-reppassword" placeholder="required" required>
+	  </fieldset>
+
+	  <fieldset class="form-group">
+		 <label for="id-nickname">Nickname</label>
+		 <input type="text" name='nickname' class="form-control" id="id-nickname" placeholder="Nickname">
+	  </fieldset>
+
+	  <fieldset class="form-group">
+		 <label for="id-nickname">Email</label>
+		 <input type="email" name='email' class="form-control" id="id-email" placeholder="Email">
+	  </fieldset>
+
+	  <div class='submitBtnStyle'>
+		  <button type="submit" class="btn btn-primary">Submit</button>
+	  </div>
 	</form>
+	</div>
+
+
   </body>
 </html>

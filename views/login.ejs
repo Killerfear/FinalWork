@@ -1,30 +1,112 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-	<form action='/user/login' method='post'>
-		<p>
-			<label>Username</label>
-			<input type='text' name='username' placeholder='用户名' />
-		</p>
+	 <meta charset="utf-8">
+	 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+	 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	 <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
-		<p id='pass'>
-			<label>Password</label>
-			<input type='password' name='password' placeholder='密码' />
-		</p>
 
-		<p><input type='submit' value='登录' /></p>
-	</form>
-	<script>
-		if (pass_error) {
-			var pNode = document.createElement('label');
-			pNode.textContent = '密码错误';
-			document.getElementById('pass').appendChild(pNode);
+	 <link href="/stylesheets/bootstrap.min.css" rel="stylesheet">
+	 <script type='text/javascript' src='/javascript/jquery.min.js' ></script>
+	 <script type='text/javascript' src='/javascript/bootstrap.js' ></script>
+
+	 <!-- Custom styles for this template -->
+	 <style>
+	 body {
+		 padding-top: 60px;
+		 padding-bottom: 40px;
+		 background-color: #eee;
+	 }
+
+	.form-signin {
+		max-width: 330px;
+		padding: 15px;
+		margin: 0 auto;
+	}
+
+	.alert-danger {
+		max-width: 830px;
+		margin: 0 auto;
+	}
+
+
+
+	.form-signin .form-signin-heading,
+		.form-signin .checkbox {
+			margin-bottom: 10px;
+			text-align: middle;
 		}
+	.form-signin .checkbox {
+		font-weight: normal;
+	}
+	.form-signin .form-control {
+		position: relative;
+		height: auto;
+				  -webkit-box-sizing: border-box;
+				  box-sizing: border-box;
+		padding: 10px;
+					font-size: 16px;
+	}
+	.form-signin .form-control:focus {
+		z-index: 2;
+	}
+	.form-signin input[type="text"] {
+		margin-bottom: 10px;
+		border-bottom-right-radius: 5px;
+		border-bottom-left-radius: 5px;
+		border-top-left-radius: 5px;
+		border-top-right-radius: 5px;
+
+	}
+	.form-signin input[type="password"] {
+		margin-bottom: 10px;
+		border-top-left-radius: 5px;
+		border-top-right-radius: 5px;
+		border-bottom-right-radius: 5px;
+		border-bottom-left-radius: 5px;
+	}
+
+	.myStyle {
+		max-width: 330px;
+		padding: 15px;
+		margin: 0 auto;
+		text-align: right;
+		vertical-align: right;
+		
+	}
+
+	 </style>
+ </head>
+  <body>
+
+	<div class='container-fluid'>
+		<div id='sign-container'>
+		</div>
+		<div class='container'>
+			<form class='form-signin' action='/user/login' method='post'>
+				<h2 class='form-signin-heading'>用户登录</h2>
+
+				<label for='username' class='sr-only' >用户名</label>
+				<input type='text' name='username' id='username' class='form-control' placeholder='用户名' required autofocus>
+
+				<label for='password' class='sr-only' >密码</label>
+				<input type='password' name='password' id='password' class='form-control' placeholder='密码' required />
+
+				<button class='btn btn-lg btn-primary btn-block' type='submit'>登录</button>
+			</form>
+			<div class='myStyle'>
+				还没注册？
+				<a href='/user/signup'>注册</a>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		<%if (pass_error) {%>
+			var alter = "<div class='alert alert-danger'><%= pass_error %></div>";
+			$("#sign-container").prepend(alter);
+		<%}%>
 	</script>
-	<a href='/user/signup'>注册</a>
   </body>
 </html>

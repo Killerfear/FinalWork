@@ -22,7 +22,13 @@ var legalUsername = co.wrap(function * (text) {
 
 router.get('/login', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		return { page: 'login', title: '登录' }
+		return { page: 'login', title: '登录' , pass_error: 'xxx'}
+	}));
+});
+
+router.get('/signup', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		return { page: 'signup', title: '注册', msg: [ ] }
 	}));
 });
 
@@ -36,7 +42,8 @@ router.post('/login', function(req, res, next) {
 		if (!user) {
 			return {
 				page: 'login',
-				pass_error: "密码错误"
+				title: '登录',
+				pass_error: "帐号或密码错误"
 			}
 		}
 
@@ -54,31 +61,31 @@ router.post('/login', function(req, res, next) {
 
 //登出
 router.get('/logout', function(req, res, next) {
-	LogicHandler.Handle('login', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		req.session.destroy();
-		return {};
+		res.redirect('/user/login');
 	}));
 });
 
 //注册
 router.post('/signup', function(req, res, next) {
-	LogicHandler.Handle('signup', req, next, co.wrap(function *() {
+	LogicHandler.Handle(req, res, next, co.wrap(function *() {
 		var body = req.body;
 
-		if (!legalUsername(body.username)) throw { message: "账户名格式有误" }
-		if (body.password.length < 6) throw { message: "密码长度过短" }
-		if (body.password != body.reppassword) throw { message: "密码不一致" }
+		if (!legalUsername(body.username)) return {  page: 'signup', msg: ["账户名格式有误"] }
+		if (body.password.length < 6) return { page: 'signup', msg: ["密码长度过短"] }
+		if (body.password != body.reppassword) return { page: 'signup', msg: ["密码不一致"] }
 
 		var user = yield User.getByName(body.username);
 
-		if (user) throw { message: "账户已存在" };
+		if (user) return { page: 'signup', msg: ["账户已存在"] };
 
 		user = {};
 
 		user.ip = req.ip;
 		user.email = body.email;
 		user.submit = [];
-		user.sovled = [];
+		user.solved = [];
 		user.gender = body.gender;
 		user._id = body.username;
 		user.password = body.password;
@@ -88,7 +95,7 @@ router.post('/signup', function(req, res, next) {
 		user.salt = bcrypt.genSaltSync();
 		user.password = bcrypt.hashSync(user.password, user.salt);
 
-		yield User.save(user);
+		yield User.create(user);
 		res.redirect('/user/login');
 	}));
 });
@@ -96,20 +103,15 @@ router.post('/signup', function(req, res, next) {
 //获取个人信息
 router.get('/profile', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = User.getBySession(req.session);
-
-		if (!user) throw { message: "会话失效" }
-
-		return user;
+		return req.user;
 	}));
 });
 
 //修改个人信息
 router.post('/profile', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = User.getBySession(req.session);
+		var user = req.user;
 
-		if (!user) throw { message: "会话失效" }
 		var setter = _.pick(req.body, 'nickname', 'email', 'gender');
 
 		user = _.extend(user, setter);
@@ -127,9 +129,7 @@ router.post('/profile/password', function(req, res, next) {
 
 		if (body.newPass != body.newRepPass) throw { message: "密码不一致" }
 
-		var user = User.getBySession(req.session);
-
-		if (!user) throw { message: "会话失效" }
+		var user = req.user;
 
 		var haxiPass = yield bcrypt.hash(body.oldPass, user.salt);
 

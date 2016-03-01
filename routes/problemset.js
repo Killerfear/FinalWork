@@ -18,9 +18,8 @@ var mongo = require('../lib/mongo-extend');
 
 //新增题目描述
 router.post('/description/add', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
-		console.log(user);
 
 		if (!user.isAdmin) throw { message: "无权限" }
 
@@ -55,7 +54,7 @@ router.post('/description/add', function(req, res, next) {
 
 //修改题目描述
 router.post('/description/update', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		console.log(user);
 
@@ -98,7 +97,7 @@ router.get('/description/delete', function(req, res, next) {
 
 //获取题目数据列表
 router.get('/samplelist', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		if (!user.isAdmin) throw { message: "无权限" }
 
@@ -121,7 +120,7 @@ router.get('/samplelist', function(req, res, next) {
 
 //获取题目数据
 router.get('/sample', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		if (!user.isAdmin) throw { message: "无权限" };
 
@@ -141,7 +140,7 @@ router.get('/sample', function(req, res, next) {
 
 //添加题目测试数据
 router.post('/sample/add', upload.single('file'), function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var file = req.file;
 		if (!file) throw { message: "参数缺失" }
 
@@ -191,7 +190,7 @@ router.post('/sample/update', function(req, res, next) {
 
 //删除题目测试数据
 router.post('/sample/delete', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 
 		if (!user.isAdmin) throw { message: "无权限" }
@@ -211,7 +210,7 @@ router.post('/sample/delete', function(req, res, next) {
 
 //获取题目列表
 router.get('/', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 
 		var skip = req.query.skip, limit = req.query.limit;
@@ -235,13 +234,13 @@ router.get('/', function(req, res, next) {
 			else problem.state = 0;
 		}
 
-		return { title: problems }
+		return { page:'problemlist', problems: problems, problemNum: 1234 };
 	}));
 });
 
 //获取题目描述
 router.get('/problem', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		var problemId = req.query.problemId;
 		var problem = yield mongo.findOne('Problem', { _id: parseInt(problemId) });
@@ -255,7 +254,7 @@ router.get('/problem', function(req, res, next) {
 
 //提交代码
 router.post('/submit', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		var problemId = parseInt(req.query.problemId);
 		var contestId = parseInt(req.query.contestId);
