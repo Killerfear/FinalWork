@@ -5,20 +5,45 @@ var fs = require('fs');
 var _ = require('underscore');
 var multer = require('multer');
 var redis = require('../lib/redis-extend');
-var io = require('socket.io-client');
-
-var socket = io.connect('127.0.0.1:33445');
-
-socket.on('connect', function() {});
-
 var upload = multer({dest: 'uploads/' });
 
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
 var mongo = require('../lib/mongo-extend');
 
+router.get('*', function(req, res, next) {
+	if (!user.isAdmin) return next({ message: "无权限" };
+	next();
+});
+
+//管理员主页 类似题目列表页面
+router.get('/', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var page = parseInt(req.query.page);
+		var skip = 50 * (page - 1);
+		var limit = 50;
+
+		var problems = yield mongo.find({}, { skip: skip, limit: limit });
+		var problemCount = yield redis.getAsync('problemCount');
+
+		return { page: 'admin', problems: problems, problemCount : problemCount }
+	}));
+});
+
+//题目编辑页面
+router.get('/problem/edit', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var problem = { };
+		if (req.query.problemId) {
+			problem = yield mongo.findOne({ _id: parseInt(problemId) });
+		}
+		return { "admin-edit", detail: problem };
+	}));
+});
+
+
 //新增题目描述
-router.post('/description/add', function(req, res, next) {
+router.post('/problem/add', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 
@@ -47,12 +72,12 @@ router.post('/description/add', function(req, res, next) {
 
 		yield mongo.addOne('Problem', problem);
 
-		return { title: req.baseUrl + req.path }
+		res.redirect('back');
 	}));
 });
 
 //修改题目描述
-router.post('/description/update', function(req, res, next) {
+router.post('/problem/update', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 		console.log(user);
@@ -77,12 +102,13 @@ router.post('/description/update', function(req, res, next) {
 			if (err) throw err;
 		}
 
-		return { title : req.baseUrl + req.path }
+		res.end();
+
 	}));
 });
 
 //删除题目描述
-router.get('/description/delete', function(req, res, next) {
+router.get('/problem/delete', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 
@@ -206,99 +232,6 @@ router.post('/sample/delete', function(req, res, next) {
 	}));
 });
 
-
-//获取题目列表
-router.get('/', function(req, res, next) {
-	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-
-		var page = req.query.page;
-		var skip = (page - 1) * 50;
-		var limit = 50;
-
-		var problems = yield mongo.find('Problem', { }, { skip: skip, limit: limit, select: { _id: 1, title: 1 }});
-
-		var solved = user.solved;
-		var unsolved = _.difference(user.submit, solved);
-
-		solved.sort();
-		unsolved.sort();
-
-		var j = 0, k = 0;
-		for (var i = 0; i < problems.length; ++i) {
-			var problem = problems[i];
-			while (j < solved.length && solved[j] < problem._id) ++j;
-			while (k < unsolved.length && unsolved[k] < problem._id) ++k;
-
-			if (j < solved.length && solved[j] == problem._id) problem.state = 1;
-			else if (k < unsolved.length && unsolved[k] == problem._id) problem.state = 2;
-			else problem.state = 0;
-		}
-
-		return { page:'problemlist', problems: problems, problemNum: 500, username: user._id , isAdmin: user.isAdmin }
-	}));
-});
-
-//获取题目描述
-router.get('/problem', function(req, res, next) {
-	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		var problemId = req.query.problemId;
-		var problem = yield mongo.findOne('Problem', { _id: parseInt(problemId) });
-
-		if (!problem || (!user.isAdmin && problem.isHidden)) throw { message: "题目不存在" }
-
-		console.log(problem);
-		return problem;
-	}));
-});
-
-//提交代码
-router.post('/submit', function(req, res, next) {
-	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		var problemId = parseInt(req.query.problemId);
-		var contestId = parseInt(req.query.contestId);
-		var problem = yield mongo.findOne('Problem', { _id: parseInt(problemId) }, { select: { files: 1 } });
-
-		if (!problem || (problem.isHidden && !contestId)) throw { message: "题目不存在" }
-
-		if (problem.isHidden) {
-			var isInContest = yield mongo.findAndCount('Contest', { _id: contestId, problemId: problemId });
-			if (!isInContest) throw { message: "题目不存在" }
-		}
-
-		var srcCode = req.body.srcCode;
-		var solId = yield mongo.findOneAndUpdate('Stat', { name: 'solution' }, { select: { _id: 0, count: 1 } });
-		solId = solId.count;
-
-		var solution = {
-			_id: solId,
-			username: user._id,
-			problemId: problemId,
-			ip: req.ip,
-			memory: 0,
-			time: 0,
-			submitTime: new Date().getTime(),
-			srcCode: srcCode,
-			codeLength: srcCode.length.toString() + 'B', 
-			contestId: contestId,
-			result: 0
-		}
-
-		var promises = [];
-		promises.push(mongo.insert('Solution',solution));
-		
-		if (!_.contains(user.submit, problemId)) {
-			promises.push(mongo.insert('User', { _id: user._id }, { $addToSet: { submit: problemId } }));
-		}
-
-		yield promises;
-		
-		socket.emit('judge', { user: user, solutionId: solution._id, srcCode: srcCode, problemId: problemId, judgeType: 0 });
-		return { title: req.baseUrl + req.path };
-	}));
-});
 
 
 

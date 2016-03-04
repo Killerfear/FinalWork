@@ -54,7 +54,7 @@ router.post('/login', function(req, res, next) {
 		req.session.save();
 		console.log(req.session);
 
-		res.redirect('/problemset/');
+		res.redirect('/problemset?page=1');
 		console.log('Not pass');
 	}));
 });
