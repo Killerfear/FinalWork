@@ -69,22 +69,28 @@
 			  </ul>
 
 			  <br />
-			  <br />
-			  <a href="#" role="button" class="btn btn-primary">Add Problem</a>
+			  <a href="/admin/problem/edit" target='_blank' role="button" class="btn btn-primary">Add Problem</a>
 			  <br />
 			  <br />
 				
  			  <table class="table table-striped table-bordered">
 					<thead>
 						<th class="col-md-1">ID</th>
-						<th>Title</th>
+						<th>标题</th>
+						<th>操作</th>
+
 					</thead>
 					<tbody>
 					<% for(var i = 0; i < problems.length; ++i) {%>
 							<tr>
 								<td><%= problems[i]._id %></td>
 								<td>
-									<a href="/problemset/problem?problemId=<%= problems[i]._id %>"><%= problems[i].title %></a>
+									<a href="admin/problem/edit?problemId=<%= problems[i]._id %>" target='_blank' ><%= problems[i].title %></a>
+								</td>
+								<td>
+									<a href='admin/problem/edit?problemId=<%= problems[i]._id %>' target='_blank' role='button' class='btn btn-primary'>编辑</a>
+									<a href='admin/problem/delete?problemId=<%= problems[i]._id %>' role='button' class='btn btn-primary'>删除</a>
+									<a href='admin/samplelist/?problemId=<%= problems[i]._id %>' role='button' class='btn btn-primary'>添加数据</a>
 								</td>
 							</tr>
 					<% } %>

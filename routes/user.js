@@ -20,17 +20,6 @@ var legalUsername = co.wrap(function * (text) {
 	return true;
 });
 
-router.get('/login', function(req, res, next) {
-	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		return { page: 'login', title: '登录' , pass_error: 'xxx'}
-	}));
-});
-
-router.get('/signup', function(req, res, next) {
-	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		return { page: 'signup', title: '注册', msg: [ ] }
-	}));
-});
 
 //登录
 router.post('/login', function(req, res, next) {

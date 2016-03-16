@@ -10,18 +10,12 @@ var net = require('net');
 var bluebird = require('bluebird');
 var process = bluebird.promisifyAll(require('child_process'));
 var io = require('socket.io')(12345);
+var fs = require('fs');
+bluebird.promisifyAll(fs);
 
 co(function * () {
-	console.log('exec');
-	var promises = [];
-	for (var i = 0; i < 10; ++i) {
-		promises.push(process.execAsync('./a.out'));
-	}
 
-	yield promises;
-	console.log(promises);
-	console.log(res);
-	return res;
+	return yield fs.rmdirAsync('./testdir');
 }).then(function(data) {
 	console.log('success', data);
 }, function(err) {
