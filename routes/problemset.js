@@ -5,6 +5,7 @@ var fs = require('fs');
 var _ = require('underscore');
 var multer = require('multer');
 var redis = require('../lib/redis-extend');
+var bluebird = require('bluebird');
 var io = require('socket.io-client');
 
 var socket = io.connect('127.0.0.1:33445');
@@ -17,6 +18,7 @@ var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
 var mongo = require('../lib/mongo-extend');
 
+bluebird.promisifyAll(redis);
 
 
 //获取题目列表
@@ -61,7 +63,12 @@ router.get('/problem', function(req, res, next) {
 		if (!problem || (!user.isAdmin && problem.isHidden)) throw { message: "题目不存在" }
 
 		console.log(problem);
-		return problem;
+
+		return {
+			page: "problem-main",
+			problem: problem,
+			isAdmin: user.isAdmin
+		}
 	}));
 });
 
@@ -69,9 +76,11 @@ router.get('/problem', function(req, res, next) {
 router.post('/submit', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
-		var problemId = parseInt(req.query.problemId);
-		var contestId = parseInt(req.query.contestId);
-		var problem = yield mongo.findOne('Problem', { _id: parseInt(problemId) }, { select: { files: 1 } });
+		var problemId = parseInt(req.body.problemId);
+		var contestId = null;
+		if (req.query.contestId) contestId = parseInt(req.query.contestId);
+
+		var problem = yield mongo.findOne('Problem', { _id: problemId }, { select: { files: 1 } });
 
 		if (!problem || (problem.isHidden && !contestId)) throw { message: "题目不存在" }
 
@@ -81,12 +90,12 @@ router.post('/submit', function(req, res, next) {
 		}
 
 		var srcCode = req.body.srcCode;
-		var solId = yield mongo.findOneAndUpdate('Stat', { name: 'solution' }, { select: { _id: 0, count: 1 } });
+		var solId = yield redis.incrAsync("solutions");
 		solId = solId.count;
 
 		var solution = {
 			_id: solId,
-			username: user._id,
+			userName: user._id,
 			problemId: problemId,
 			ip: req.ip,
 			memory: 0,
@@ -99,16 +108,21 @@ router.post('/submit', function(req, res, next) {
 		}
 
 		var promises = [];
-		promises.push(mongo.insert('Solution',solution));
+		promises.push(mongo.addOne('Solution',solution));
 		
 		if (!_.contains(user.submit, problemId)) {
-			promises.push(mongo.insert('User', { _id: user._id }, { $addToSet: { submit: problemId } }));
+			promises.push(mongo.updateOne('User', { _id: user._id }, { $addToSet: { submit: problemId } }));
 		}
 
 		yield promises;
 		
 		socket.emit('judge', { user: user, solutionId: solution._id, srcCode: srcCode, problemId: problemId, judgeType: 0 });
-		return { title: req.baseUrl + req.path };
+		res.redirect('/status');
+		return {
+			json: {
+				result: "success"
+			}
+		}
 	}));
 });
 

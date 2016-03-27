@@ -11,7 +11,7 @@ var LogicHandler = require('../lib/logic-handler');
 var mongo = require('../lib/mongo-extend');
 
 router.get('/', function(req, res, next) {
-	LogicHandler.Handle('index', req, res, next, co.wrap(function * () {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var query = { username: "", problemId: "" };
 		var param = req.query;
 
@@ -22,7 +22,7 @@ router.get('/', function(req, res, next) {
 
 		var res = yield mongo.find('Solution', query, option);
 
-		return { title : res }
+		return { }
 	}));
 });
 

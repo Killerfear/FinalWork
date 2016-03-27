@@ -11,9 +11,13 @@
 	 <link href="/stylesheets/bootstrap.min.css" rel="stylesheet">
 	 <link href='/stylesheets/remodal.css'>
 	 <link rel="stylesheet" href="/stylesheets/remodal-default-theme.css">
+	 <link rel="stylesheet" media="all" type="text/css" href="/stylesheets/fileinput.min.css" />
 	 <script type="text/javascript" src="/javascript/jquery.min.js" ></script>
 	 <script type="text/javascript" src="/javascript/bootstrap.js" ></script>
 	 <script type="text/javascript" src="/javascript/remodal.min.js"></script>
+	 <script type="text/javascript" src="/javascript/fileinput.min.js"></script>
+	 <script type="text/javascript" src="/javascript/canvas-to-blob.min.js" ></script>
+
 
 	 <style>
 	 	.container {
@@ -83,7 +87,9 @@
 
 
 	  <div class="container">
-	  	  <a href="#" role="button" class="btn btn-primary">Add File</a>	
+	  	  <label class="control-label">Add File</label>
+		  <input type="file" class="file" name="file" id="add-file" multiple >
+
 		  <table class="table table-striped table-bordered">
 		  	<thead>
 				<th></th>
@@ -100,7 +106,7 @@
 						<a id='delete<%= i %>' href='#' role='button' class='btn btn-primary'>delete</a>
 
 					  <script>
-						$('#delete<%= i %>').attr('href', '/admin/samplelist/delete' + location.search + '&fileName=<%= file[i] %>');
+						$('#delete<%= i %>').attr('href', '/admin/sample/delete' + location.search + '&fileName=<%= file[i] %>');
 						$('#edit<%= i %>').attr('href', '/admin/sample' + location.search + '&fileName=<%= file[i] %>');
 						$('#name<%= i %>').attr('href', '/admin/sample' + location.search + '&fileName=<%= file[i] %>');
 					  </script>
@@ -110,6 +116,21 @@
 			</tbody>
 		</table>
 	  </div>
+
+	  <script>
+	  	$("#add-file").fileinput({ 
+			showCaption: false ,
+			previewFileType: "text",
+			allowedFileExtensions: ['in', 'out'],
+			allowedPreviewTypes: ['in', 'out'],
+			uploadAsync: true,
+			uploadUrl: '/admin/sample/add' + location.search,
+		})
+		.on('fileuploaded', function(event) {
+			location.reload();
+		});
+
+	  </script>
 
 		
   </body>

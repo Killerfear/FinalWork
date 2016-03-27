@@ -21,6 +21,9 @@ var legalUsername = co.wrap(function * (text) {
 });
 
 
+function buildJson(data) { return { json: data } };
+
+
 //登录
 router.post('/login', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
@@ -61,13 +64,13 @@ router.post('/signup', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function *() {
 		var body = req.body;
 
-		if (!legalUsername(body.username)) return {  page: 'signup', msg: ["账户名格式有误"] }
-		if (body.password.length < 6) return { page: 'signup', msg: ["密码长度过短"] }
-		if (body.password != body.reppassword) return { page: 'signup', msg: ["密码不一致"] }
+		if (!legalUsername(body.username)) return buildJson({ result: "fail", msg: "账户名格式有误" });
+		if (body.password.length < 6) return buildJson({ result: 'fail', msg: "密码长度过短" });
+		if (body.password != body.reppassword) return buildJson({ result: 'fail', msg: "密码不一致" });
 
 		var user = yield User.getByName(body.username);
 
-		if (user) return { page: 'signup', msg: ["账户已存在"] };
+		if (user) return buildJson({ result : 'fail', msg: "账户已存在" });
 
 		user = {};
 
@@ -85,7 +88,7 @@ router.post('/signup', function(req, res, next) {
 		user.password = bcrypt.hashSync(user.password, user.salt);
 
 		yield User.create(user);
-		res.redirect('/user/login');
+		return buildJson({ result: 'success', msg: '注册成功'});
 	}));
 });
 
