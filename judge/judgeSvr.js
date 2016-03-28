@@ -1,7 +1,9 @@
 var co = require('co');
+var _ = require('underscore');
 var child_process = require('child_process');
+var fs = require('fs');
 var cluster = require('cluster');
-var numCPUs = require('os').cpus().length;
+var numCPUs = 1;//require('os').cpus().length;
 var mongo = require('../lib/mongo-extend');
 var judge = require('../judge/build/Release/judge');
 
@@ -22,11 +24,13 @@ var OJ_RESULT = ['OJ_PENDING', 'OJ_COMPILE', 'OJ_RUNNING', 'OJ_CE', 'OJ_RE', 'OJ
 
 function compile(srcCode)
 {
-	child_process.execSync("echo -e \"" + srcCode + "\" > Main.cc");
+	//child_process.execSync("echo -e \"" + srcCode + "\" > Main.cc");
+	var err = fs.writeFileSync("Main.cc", srcCode, { encoding: "utf8" });
+	console.log(err);
 	var options = {
 		timeout: 60 * 1000, //60s
 		maxBuffer: 100 * 1024, 	//100KB
-		encoding: utf8
+		encoding: "utf8"
 	};
 	var ce = child_process.execSync("g++ Main.cc -o Main -lm -O3 -DONLINE_JUDGE --static", options);
 	return ce;
@@ -46,7 +50,9 @@ if (cluster.isMaster) {
 	var io = require('socket.io')(33445);
 
 	io.on('connect', function(socket) {
+		console.log("connected....");
 		socket.on('judge', function (submit) {
+			console.log("judging....");
 			var worker = _.min(workers, function(data) { return data.used; });
 			++worker.used;
 			worker.worker.send(submit);
@@ -64,16 +70,17 @@ if (cluster.isMaster) {
 	process.chdir(workDir);
 
 	process.on('message', co.wrap(function * (submit) {
-		var fullPath = __dirname + "/problem/" + submit.problemId;
+		var fullPath = __dirname + "/../problem/" + submit.problemId;
 		var user = submit.user;
 		
 		yield mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set: { result: OJ_COMPILE } });
-		var ce = compile(submit.src);
+		var ce = compile(submit.srcCode);
 
 		if (ce) {
 			yield mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set: { result: OJ_CE, ceInfo: ce } });
 		} else {
 			var wait = mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set: { result: OJ_RUNNING } });
+			console.log("Start Judging");
 			var judgeResult = judge.judge(workDir, fullPath, submit.memLimit, submit.timeLimit, submit.judgeType);
 
 			yield wait;

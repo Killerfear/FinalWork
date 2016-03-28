@@ -8,9 +8,9 @@ var redis = require('../lib/redis-extend');
 var bluebird = require('bluebird');
 var io = require('socket.io-client');
 
-var socket = io.connect('127.0.0.1:33445');
+var socket = io('http://localhost:33445');
 
-socket.on('connect', function() {});
+socket.on('connect', function() { console.log("OK"); });
 
 var upload = multer({dest: 'uploads/' });
 
@@ -91,7 +91,6 @@ router.post('/submit', function(req, res, next) {
 
 		var srcCode = req.body.srcCode;
 		var solId = yield redis.incrAsync("solutions");
-		solId = solId.count;
 
 		var solution = {
 			_id: solId,
@@ -107,6 +106,8 @@ router.post('/submit', function(req, res, next) {
 			result: 0
 		}
 
+		//console.log(solution);
+
 		var promises = [];
 		promises.push(mongo.addOne('Solution',solution));
 		
@@ -117,7 +118,7 @@ router.post('/submit', function(req, res, next) {
 		yield promises;
 		
 		socket.emit('judge', { user: user, solutionId: solution._id, srcCode: srcCode, problemId: problemId, judgeType: 0 });
-		res.redirect('/status');
+		//res.redirect('/status');
 		return {
 			json: {
 				result: "success"

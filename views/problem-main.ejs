@@ -126,12 +126,10 @@
 			$(document).ready(function () {
 				$("#submit-button").on("click", function() {
 					var code = $("#code").val();
-					alert(code);
 					var problemid = $.url(location).param('problemId');
 					$.post("submit", { problemId: problemid, srcCode: code }, function(result) {
-						alert(result);
+						location.href = "/status?page=1";
 					}, "json");
-					alert(problemid);
 				});
 			});
 //			$(function () { $('#submit-modal').modal({

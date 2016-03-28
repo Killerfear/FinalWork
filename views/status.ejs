@@ -111,7 +111,7 @@
 						<tr>
 							<td><%= solutions[i]._id %></td>
 							<td><a href="#"><%= solutions[i].userName %></a> </td>
-							<td><a href="/problem?probmeId=<%= solutions[i].problem %>"><%= solutions[i].problem %></a></td>
+							<td><a href="/problemset/problem?problemId=<%= solutions[i].problemId %>"><%= solutions[i].problemId %></a></td>
 							<td><%= solutions[i].result %></a></td>
 							<td><%= solutions[i].memory %></a></td>
 							<td><%= solutions[i].time %></a></td>
@@ -123,39 +123,8 @@
 			  </table>
 	  	</div>
 
-		<div class="modal fade" id='code-review-modal'>
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-						<h4 class="modal-title"><%= problem.title %></h4>
-					</div>
-					<div class="modal-body">
-						<textarea cols="90%" rows="20%" id="code"></textarea>
-					</div>
-					<div class="modal-footer">
-						<a class="btn btn-default" id='submit-button'>Submit</a>
-						<a class="btn btn-default" data-dismiss="modal">Close</a>
-					</div>
-				</div>
-			</div>
-		</div>
 
 		<script>
-			$(document).ready(function () {
-				$("#submit-button").on("click", function() {
-					var code = $("#code").val();
-					alert(code);
-					var problemid = $.url(location).param('problemId');
-					$.post("submit", { problemId: problemid, srcCode: code }, function(result) {
-						alert(result);
-					}, "json");
-					alert(problemid);
-				});
-			});
-//			$(function () { $('#code-review-modal').modal({
-//				keyboard: true
-//			})});
 		</script>
 
 

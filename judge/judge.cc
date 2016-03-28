@@ -20,6 +20,7 @@
 #include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <errno.h>
 #include <vector>
 #include <string>
 
@@ -185,23 +186,29 @@ void prepareFiles(const char * filename, int namelen, const string & fullPath, c
 	infile = workDir + "/data.in";
 	executeCmd("/bin/cp %s/%s.in %s/data.in", fullPath.c_str(), fname, workDir.c_str());
 
-	outfile = fullPath + string(fname) + ".out";
+	outfile = fullPath + "/" + string(fname) + ".out";
 	userfile = workDir + "/user.out";
 }
 
 void runSolution(const string & workDir, int & timeLimit, int & usedtime, int & memLimit)
 {
-	assert(nice(19) == 0);
+	puts("1");
+	assert(nice(19) != -1);
 	// now the user is "judger"
+	puts("2");
 	assert(chdir(workDir.c_str()) == 0);
+	puts("3");
 	// open the files
-	assert(freopen("data.in", "r", stdin) != NULL);
-	assert(freopen("user.out", "w", stdout) != NULL);
-	assert(freopen("error.out", "a+", stderr) != NULL);
+	freopen("data.in", "r", stdin);
+	freopen("user.out", "w", stdout);
+	freopen("error.out", "a+", stderr);
+	puts("4");
 	// trace me
+	puts("ptrace...");
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 	// run me
 	assert(chroot(workDir.c_str()) == 0);
+	puts("chroot...");
 
 	while(setgid(65534)!=0) sleep(1);
 	while(setuid(65534)!=0) sleep(1);
@@ -236,7 +243,9 @@ void runSolution(const string & workDir, int & timeLimit, int & usedtime, int & 
 	setrlimit(RLIMIT_AS, &LIM);
 
 
+	printf("Running...");
 	execl("./Main", "./Main", (char *)NULL);
+	printf("Running finish");
 	exit(0);
 }
 
@@ -465,6 +474,7 @@ int compare(const char *file1, const char *file2)
 	int PEflg;
 	s1=new char[STD_F_LIM+512];
 	s2=new char[STD_F_LIM+512];
+	printf("%s %s\n", file1, file2);
 	if (!(f1=fopen(file1,"r")))
 		return OJ_AC;
 	for (p1=s1; EOF!=fscanf(f1,"%s",p1);)
@@ -523,7 +533,9 @@ void judgeSolution(int & ACflg, int & usedtime, int timeLimit, int isspj,
 		}
 		else
 		{
+			puts("Compare Start");
 			comp_res = compare(outfile.c_str(), userfile.c_str());
+			puts("Compare Done");
 		}
 		if (comp_res == OJ_WA)
 		{
@@ -569,8 +581,7 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 
 	while((ACflg == OJ_AC) && (dirp = readdir(dp)) != NULL) {
 		namelen = isInFile(dirp->d_name); // check if the file is *.in or not
-		if (namelen == 0)
-		continue;
+		if (namelen == 0) continue;
 
 		prepareFiles(dirp->d_name, namelen, fullPath, workDir, infile, outfile, userfile);
 
@@ -580,7 +591,6 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 
 		if (pidApp == 0)
 		{
-
 			runSolution(workDir, timeLimit, usedtime, memLimit);
 		}
 		else
@@ -597,9 +607,11 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 				max_case_time=usedtime>max_case_time?usedtime:max_case_time;
 				usedtime=0;
 			}
+			printf("wwww");
 			//clean_session(pidApp);
 		}
 	}
+	puts("Finish");
 
 	if (ACflg == OJ_AC && PEflg == OJ_PE)
 		ACflg = OJ_PE;
@@ -615,6 +627,8 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 	{
 		usedtime=timeLimit*1000;
 	}
+
+	printf("%d\n", ACflg);
 
 
 	//usedtime(ms), topmemory(kb), Acflg, 

@@ -12,17 +12,22 @@ var mongo = require('../lib/mongo-extend');
 
 router.get('/', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var query = { username: "", problemId: "" };
+		var query = { userName: "", problemId: "", contestId: ""};
 		var param = req.query;
 
 		query = _.extendOwn(query, param);
 
-		var option = { sort: "", skip: 0, limit: 50 };
+		var page = req.query;
+
+		var option = { sort: {submitTime: -1}, skip: (page - 1) * 50, limit: 50 };
 		option = _.extendOwn(option, query);	
 
-		var res = yield mongo.find('Solution', query, option);
+		var res = yield mongo.find('Solution', {}, option);
 
-		return { }
+		return {
+			page: 'status',
+			solutions: res
+		}
 	}));
 });
 
