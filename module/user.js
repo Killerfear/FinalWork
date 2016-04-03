@@ -1,13 +1,12 @@
 var co = require('co');
-var mongo = require('../lib/mongo-extend');
+var db = require('../lib/mongoose-schema');
 var ObjectId = require('mongodb').ObjectId;
 var redis = require('../lib/redis-extend');
 var bcrypt = require('bcrypt');
 
 
 exports.getByName = co.wrap(function * (name) {
-	var user = yield mongo.findOne("User", { _id: name });
-	return user;
+	return yield db.User.findOne({ username: name });
 });
 
 exports.authenticate = co.wrap(function*(name, pass) {
@@ -24,19 +23,16 @@ exports.authenticate = co.wrap(function*(name, pass) {
 exports.getBySession = co.wrap(function * (session) {
 	var user;
 	if (session && session.uid) {
-		var user = exports.getByName(session.uid);
+		var user = exports.getById(session.uid);
 	}
 	return user;
 });
 
 
 exports.updateByName = co.wrap(function * (user, option) {
-	if (!option) option = {};
-	return yield mongo.findOnAndUpdate('User', { _id: user._id } , { $set: user }, option);
+	return yield db.User.findOnAndUpdate('User', { _id: user._id } , { $set: user }, option);
 });
 
 exports.create = co.wrap(function * (user) {
-	return yield mongo.addOne('User', user);
+	return yield db.User(user).save();
 });
-
-

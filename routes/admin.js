@@ -12,7 +12,7 @@ var child_process = require("child_process");
 
 var User = require("../module/user");
 var LogicHandler = require("../lib/logic-handler");
-var mongo = require("../lib/mongo-extend");
+var DB = require("../lib/mongoose-schema");
 
 bluebird.promisifyAll(fs);
 bluebird.promisifyAll(child_process);
@@ -32,8 +32,12 @@ router.get("/", function(req, res, next) {
 		var skip = 50 * (page - 1);
 		var limit = 50;
 
-		var problems = yield mongo.find("Problem", {}, { skip: skip, limit: limit });
-		var problemCount = yield redis.getAsync("problemCount");
+		var problems = yield DB.Problem.find()
+														  .sort("problemId")
+															.skip(skip)
+															.limit(limit)
+															.exec();
+		var problemCount = (yield DB.Problem.stats()).count;
 
 		return { page: "admin-main", problems: problems, problemNum : problemCount, username: req.user.username }
 	}));
@@ -49,11 +53,11 @@ router.get("/problem/edit", function(req, res, next) {
 			title = "编辑题目"
 		}
 
-		return { 
-			page: "admin-edit", 
+		return {
+			page: "admin-edit",
 			title: title,
-			username: req.user.username, 
-			details: problem 
+			username: req.user.username,
+			details: problem
 		};
 	}));
 });
@@ -74,8 +78,8 @@ router.post("/problem/add", function(req, res, next) {
 
 		yield fs.mkdirAsync(path, 600);
 
-		var problem = _.pick(param, 
-			"title", "description", "input", "output", "sampleInput", "sampleOutput", "isHidden", 
+		var problem = _.pick(param,
+			"title", "description", "input", "output", "sampleInput", "sampleOutput", "isHidden",
 			"timeLimit", "memLimit");
 		problem._id = id;
 
@@ -93,7 +97,7 @@ router.post("/problem/add", function(req, res, next) {
 router.post("/problem/update", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 
-		var setter = _.pick(req.body, 
+		var setter = _.pick(req.body,
 			"title", "description", "input", "output", "sampleInput", "sampleOutput", "isHidden",
 			"timeLimit", "memLimit");
 
@@ -176,7 +180,7 @@ router.get("/sample", function(req, res, next) {
 			problemId: problemId
 		};
 	}));
-	
+
 });
 
 //添加题目测试数据
@@ -249,6 +253,64 @@ router.get("/sample/delete", function(req, res, next) {
 });
 
 
+/*******************************比赛相关*********************************/
+
+//获取比赛数据
+router.get('/contest/list', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var contests = yield mongo.find("Contest", {});
+		return {
+			json: {
+				contests: contests
+			}
+		}
+	}));
+});
+
+//创建比赛
+router.post('/contest/edit', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+
+		var param = req.body;
+		var contest = _.pick(param, 'title', 'problemId', 'isPrivate', 'startTime', 'endTime', 'isHidden', 'authorizee');
+
+		yield mongo.insert('Contest', contest);
+
+		return { title: req.baseUrl + req.path };
+	}));
+});
+
+//编辑比赛
+router.post('/contest/edit/update',function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var user = req.user;
+		if (!user.isAdmin) throw { message: "无权限" }
+
+		var param = req.body;
+		var contestId = ObjectID(param.contestId);
+
+		var setter = _.pick(param, 'title', 'problemId', 'isPrivate', 'startTime', 'endTime', 'isHidden', 'authorizee');
+
+		var doc = yield mongo.findOneAndUpdate('Contest', { _id: contestId }, { $set: setter , returnOriginal : false });
+
+		return { title :  doc };
+	}));
+});
+
+//删除比赛
+router.get('/contest/edit/delete', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var user = req.user;
+		if (!user.isAdmin) throw { message: "无权限" }
+
+		var param = req.query;
+		var contestId = ObjectID(param.contestId);
+
+		var result = yield mongo.findOneAndDelete("Contest", { _id: contestId });
+
+		return { title : result }
+	}));
+});
 
 
 module.exports = router;

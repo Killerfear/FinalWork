@@ -1,28 +1,38 @@
+'use strict'
+
 var express = require('express');
 var router = express.Router();
 var co = require('co');
 var fs = require('fs');
-var _ = require('underscore');
+var _ = require('lodash');
 var multer = require('multer');
 var io = require('socket.io-client');
 
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
-var mongo = require('../lib/mongo-extend');
+var DB = require('../lib/mongoose-schema');
 
 router.get('/', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var query = { userName: "", problemId: "", contestId: ""};
-		var param = req.query;
+		var query = _.pick(req.query, "userName", "problemId", "result", "contestId");
+		var skip = (req.query.page - 1) * 50;
+		var limit = 50;
 
-		query = _.extendOwn(query, param);
+		var solutions = yield
+			DB.Solution.find(query)
+								 .select("-_id -ip")
+								 .sort("-solutionId")
+								 .skip(skip)
+								 .limit(limit)
+								 .exec();
 
-		var page = req.query;
+		var user = req.user;
+		for (var i in solutions) {
+			var solution = solutions[i];
+			if (solution.userName != user.userName) solution.srcCode = null;
+		}
 
-		var option = { sort: {submitTime: -1}, skip: (page - 1) * 50, limit: 50 };
-		option = _.extendOwn(option, query);	
-
-		var res = yield mongo.find('Solution', {}, option);
+		var totalCount = (yield DB.Solution.collection.stats()).count;
 
 		return {
 			page: 'status',

@@ -3,6 +3,11 @@ var router = express.Router();
 
 /* GET home page. */
 
+router.get('/', function(req, res, next) {
+	res.render('index')
+})
+
+/*
 router.get('/user/login', function(req, res, next) {
 	res.render('login', { title: '登录' , pass_error: '' });
 });
@@ -18,5 +23,6 @@ router.get('/problemset/edit', function(req, res, next) {
 router.get('/problemset/sample/', function(req, res, next) {
 	res.render('sample', { title: '题目数据' });
 });
+*/
 
 module.exports = router;

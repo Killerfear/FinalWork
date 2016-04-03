@@ -28,14 +28,13 @@ function buildJson(data) { return { json: data } };
 router.post('/login', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		console.log('auth');
-		var user = yield User.authenticate(req.body.username, req.body.password); 
+		var user = yield User.authenticate(req.body.username, req.body.password);
 		console.log(user);
 
 		if (!user) {
 			return {
-				page: 'login',
-				title: '登录',
-				pass_error: "帐号或密码错误"
+				result: "fail",
+				loginError: "帐号或密码错误"
 			}
 		}
 
@@ -46,8 +45,9 @@ router.post('/login', function(req, res, next) {
 		req.session.save();
 		console.log(req.session);
 
-		res.redirect('/problemset?page=1');
-		console.log('Not pass');
+		return {
+			result: "success"
+		}
 	}));
 });
 
@@ -107,10 +107,8 @@ router.post('/profile', function(req, res, next) {
 		var setter = _.pick(req.body, 'nickname', 'email', 'gender');
 
 		user = _.extend(user, setter);
-		
-		user = yield User.update(user, { returnOriginal: false });
-		user = user.value;
-		return user;
+
+		return user.save();
 	}));
 });
 
@@ -132,8 +130,7 @@ router.post('/profile/password', function(req, res, next) {
 		user.password = bcrypt.hashSync(user.password, user.salt);
 
 		user = _.pick(user, 'password', 'salt');
-		yield User.update(user);
-		return { };
+		return yield user.save();
 	}));
 });
 

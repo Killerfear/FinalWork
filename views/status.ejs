@@ -112,11 +112,11 @@
 							<td><%= solutions[i]._id %></td>
 							<td><a href="#"><%= solutions[i].userName %></a> </td>
 							<td><a href="/problemset/problem?problemId=<%= solutions[i].problemId %>"><%= solutions[i].problemId %></a></td>
-							<td><%= solutions[i].result %></a></td>
-							<td><%= solutions[i].memory %></a></td>
-							<td><%= solutions[i].time %></a></td>
-							<td><%= solutions[i].length %></a></td>
-							<td><%= solutions[i].submitTime %></a></td>
+							<td><%= solutions[i].result %></td>
+							<td><%= solutions[i].memory %> KB</td>
+							<td><%= solutions[i].time %> MS</td>
+							<td><%= solutions[i].codeLength %> B</td>
+							<td><%= solutions[i].submitTime %></td>
 						</tr>
 					<% } %>
 					</tbody>

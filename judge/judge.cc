@@ -37,14 +37,14 @@ const int BUFFER_SIZE = 512;
 const int OJ_PENDING = 0;
 const int OJ_COMPILE = 1;
 const int OJ_RUNNING = 2;
-const int OJ_CE = 2;
-const int OJ_RE = 3;
-const int OJ_MLE = 4;
-const int OJ_TLE = 5;
-const int OJ_OL = 6;
-const int OJ_AC = 7;
-const int OJ_WA = 8;
-const int OJ_PE = 9;
+const int OJ_CE = 3;
+const int OJ_RE = 4;
+const int OJ_MLE = 5;
+const int OJ_TLE = 6;
+const int OJ_OL = 7;
+const int OJ_AC = 8;
+const int OJ_WA = 9;
+const int OJ_PE = 10;
 
 const int use_max_time = 0;
 
@@ -97,11 +97,11 @@ void getParameters(const FunctionCallbackInfo<Value>& args, string & workDir, st
 		return;
 	}
 
-	if (!args[0]->IsString() || !args[1]->IsString() || !args[2]->IsNumber()
+	/*if (!args[0]->IsString() || !args[1]->IsString() || !args[2]->IsNumber()
 			|| !args[3]->IsNumber() || !args[4]->IsNumber()) {
 		isolate->ThrowException(Exception::TypeError(
 		        String::NewFromUtf8(isolate, "Wrong arguments")));
-	}
+	}*/
 
 	memLimit = args[2]->NumberValue();
 	timeLimit = args[3]->NumberValue();
@@ -199,9 +199,9 @@ void runSolution(const string & workDir, int & timeLimit, int & usedtime, int & 
 	assert(chdir(workDir.c_str()) == 0);
 	puts("3");
 	// open the files
-	freopen("data.in", "r", stdin);
-	freopen("user.out", "w", stdout);
-	freopen("error.out", "a+", stderr);
+	assert(freopen("data.in", "r", stdin) != NULL);
+	assert(freopen("user.out", "w", stdout) != NULL);
+	assert(freopen("error.out", "a+", stderr) != NULL);
 	puts("4");
 	// trace me
 	puts("ptrace...");
@@ -631,6 +631,7 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 	printf("%d\n", ACflg);
 
 
+	topmemory >>= 10;
 	//usedtime(ms), topmemory(kb), Acflg, 
 
 	Local<Object> judgeResult = Object::New(isolate);
@@ -638,7 +639,10 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 	judgeResult->Set(String::NewFromUtf8(isolate, "memory"), Number::New(isolate, topmemory));
 	judgeResult->Set(String::NewFromUtf8(isolate, "result"), Number::New(isolate, ACflg));
 
+	puts("Return");
 	args.GetReturnValue().Set(judgeResult);
+	puts("Return....");
+	return;
 }
 
 

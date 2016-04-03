@@ -1,0 +1,24 @@
+{
+  "name": "OJSystem",
+  "description": "",
+  "main": "",
+  "authors": [
+    "killerfear <592153670@qq.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Killerfear/FinalWork",
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "^1.5.3",
+    "bootstrap": "^3.3.6",
+    "jquery": "^2.2.2",
+    "angular-resource": "^1.5.3"
+  }
+}

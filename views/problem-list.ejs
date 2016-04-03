@@ -1,0 +1,45 @@
+<header>
+  <div ng-include='navbar.ejs'></div>
+</header>
+
+<script src='https://rawgit.com/brantwills/Angular-Paging/v2.2.0/dist/paging.min.js'></script>
+
+<div class='container'>
+  <div paging
+      page="{{page}}"
+      page-size="50"
+      total="{{problemCount}}"
+      paging-action="$scope.page=page">
+  </div>
+
+    <table class='table table-striped table-bordered'>
+      <thead>
+        <th class='col-md-1'>ID</th>
+        <th>Title</th>
+      </thead>
+      <tbody>
+        <% for(var i = 0; i < problems.length; ++i) {%>
+          <% if (problems[i].state == 1) { %>
+            <tr class='success'>
+              <% } else if (problems[i].state == 2) { %>
+                <tr class='danger'>
+                  <% } else { %>
+                    <tr>
+                      <% } %>
+                      <td><%= problems[i]._id %></td>
+                      <td>
+                        <a href="/problemset/problem?problemId=<%= problems[i]._id %>"><%= problems[i].title %></a>
+                      </td>
+                    </tr>
+                    <% } %>
+                  </tbody>
+                </table>
+              </div>
+
+
+              <!-- custom script -->
+              <script>
+              var reg = new RegExp("(^|&)page=([^&]*)(&|$)");
+              var pageNum = window.location.search.substr(1).match(reg);
+              $("#id-page-" + pageNum[2]).attr("class", "active");
+              </script>
