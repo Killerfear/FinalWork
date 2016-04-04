@@ -12,7 +12,7 @@ var ejs = require('ejs');
 
 var routes = require('./routes/index');
 var user = require('./routes/user');
-var problemset = require('./routes/problemset');
+var problemset = require('./routes/problem');
 var status = require('./routes/status');
 var contest = require('./routes/contest');
 var admin = require('./routes/admin');
@@ -22,8 +22,7 @@ var app = express();
 //console.log(__dirname);
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
-app.engine('html', ejs.__express);
-app.set('view engine', 'html');
+app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
@@ -44,6 +43,7 @@ app.use(session({
 //app.use(csrf());
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, 'public', 'bower_components')))
 /*
 app.use(function(req, res, next) {
 	res.locals.csrf = req.csrfToken ? req.csrfToken() : '';
@@ -53,7 +53,7 @@ app.use(function(req, res, next) {
 
 app.use('/', routes);
 app.use('/user', user);
-app.use('/problemset', problemset);
+app.use('/problem', problemset);
 app.use('/status', status);
 app.use('/contest', contest);
 app.use('/admin', admin);

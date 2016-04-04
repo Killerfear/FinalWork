@@ -1,0 +1,46 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-ex-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#"><span>MyOJ</span></a>
+          </div>
+          <div class="collapse navbar-collapse" id="navbar-ex-collapse">
+            <ul class="nav navbar-left navbar-nav">
+              <li class="active">
+                <a href="/problem/list">Problem<span class='sr-only'>(current)</a>
+              </li>
+              <li>
+                <a href="/status">Status</a>
+              </li>
+              <li>
+                <a href="/contest">Contest<br></a>
+              </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li ng-hide='isLogin'>
+                <a href='/user/login'>Sign in</a>
+              </li>
+              <li ng-show='isAdmin'>
+                <a href="/admin">Admin</a>
+              </li>
+              <li ng-show='isLogin'>
+                <a href="/user/profile/{{username}}">{{username}}</a>
+              </li>
+              <li ng-show='isLogin'>
+                <a href="/user/logout">Logout</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -17,8 +17,9 @@
   ],
   "dependencies": {
     "angular": "^1.5.3",
-    "bootstrap": "^3.3.6",
     "jquery": "^2.2.2",
-    "angular-resource": "^1.5.3"
+    "angular-resource": "^1.5.3",
+    "bootstrap": "^3.3.6",
+    "angular-paging": "^2.2.1"
   }
 }

@@ -28,24 +28,25 @@ var OJ_RESULT = ['Pending', 'Compiling', 'Runing', 'Compile Error', 'Runtime Err
 
 
 //获取题目列表
-router.get('/', function(req, res, next) {
+router.get('/list/:page', function(req, res, next) {
+	console.log("zzz");
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		console.log("aiiaiai");
 		var user = req.user;
 
-		var page = req.query.page;
+		var page = req.params.page;
 		var skip = (page - 1) * 50;
 		var limit = 50;
 
-		var problems = yield
-				DB.Problem.find({ isHidden : false })
-					.select("title problemId -_id")
-					.sort("problemId")
-					.skip(skip)
-					.limit(limit)
-					.exec();
+		var problems = yield DB.Problem.find({ isHidden : false })
+														.select("title problemId -_id")
+														.sort("problemId")
+														.skip(skip)
+														.limit(limit)
+														.exec();
 
-		var solved = user.solved;
-		var unsolved = _.difference(user.submit, solved);
+		var solved = user ? user.solved : [];
+		var unsolved = _.difference(user ? user.submit : [], solved);
 
 		solved.sort();
 		unsolved.sort();
@@ -61,8 +62,12 @@ router.get('/', function(req, res, next) {
 			else problem.state = 0;
 		}
 
-		return { page:'problemlist', problems: problems, problemNum: 500, username: user.username , isAdmin: user.isAdmin }
-		//return problem
+		console.log("zzz");
+
+		return {
+			problemCount: 502,
+			problems: problems
+		}
 	}));
 });
 

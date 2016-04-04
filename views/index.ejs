@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<html ng-app='OJApp'>
+<head>
+  <meta charset="utf-8">
+  <title>OJ</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+  <link href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" rel="stylesheet">
+  <link href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+
+  <script src="http://cdn.bootcss.com/jquery/2.2.1/jquery.js"></script>
+  <script src="http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  <script src="angular/angular.min.js"></script>
+  <script src="angular-route/angular-route.min.js"></script>
+  <!-- <script src="http://cdn.bootcss.com/angular.js/1.5.0/angular.min.js"></script> -->
+  <!-- <script src="http://cdn.bootcss.com/angular.js/1.5.0/angular-route.min.js"></script> -->
+  <script src="http://cdn.bootcss.com/angular-ui-bootstrap/1.2.1/ui-bootstrap.min.js"></script>
+  <script src="http://cdn.bootcss.com/angular-ui-bootstrap/1.2.1/ui-bootstrap-tpls.min.js"></script>
+  <script src="http://cdn.bootcss.com/lodash.js/4.6.1/lodash.min.js"></script>
+
+
+
+  <script src='javascript/app.js'></script>
+  <script src='javascript/controller.js'></script>
+
+  <style>
+    body {
+      padding: 90px;
+    }
+  </style>
+</head>
+<body>
+  <div ng-include="'/views/navbar.ejs'"> </div>
+  <div class='container'>
+    <div ng-view></div>
+  </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 
-var onlineJudgeControllers = angular.module('onlineJudgeControllers', []);
+var OJControllers = angular.module('OJControllers', []);
 
-onlineJudgeControllers.controller('loginCtrl', ['$scope', '$http', '$location',
+OJControllers.controller('loginCtrl', ['$scope', '$http', '$location',
   function($scope, $http, $location) {
     $scope.isLoginError = false;
     $scope.loginError = "";
@@ -31,20 +31,33 @@ onlineJudgeControllers.controller('loginCtrl', ['$scope', '$http', '$location',
     }
   }]);
 
-onlineJudgeControllers.controller('problemlstCtrl', ['$scope', '$http',
-  function($scope, $http) {
-    $scope.$watch('page', function(newValue, oldValue) {
-      $location.path('/problemset/list/' + newValue);
-    })
-    $scope.getProblems = function(page) {
-      $scope.page = page;
-      $http.get('/problemset/' + $scope.page)
+OJControllers.controller('problemlstCtrl', ['$scope', '$http', '$rootScope',
+  function($scope, $http, $rootScope) {
+
+    $rootScope.getItems = function() {
+      $http.get('/problem/list/' + $rootScope.currentPage)
            .success(function(data) {
-             $scope.problems = data.problems;
+             $scope = _.assign($scope, data);
+             $rootScope.totalItems = data.problemCount;
            })
            .error(function(err) {
              alert('错误:', err)
            })
-    }
+    };
 
   }]);
+
+OJControllers.controller('paginationCtrl', ['$rootScope', '$scope',
+  function($rootScope, $scope) {
+    $rootScope.currentPage = 1;
+    $scope.setPage = function(pageNo) {
+      $rootScope.currentPage = pageNo;
+      console.log('page currentPage', $rootScope.currentPage)
+    };
+    $rootScope.getItems();
+    $scope.pageChanged = function(pageNo) {
+      console.log('pageChanged:', pageNo);
+      $rootScope.getItems();
+      console.log($scope);
+    }
+  }])
