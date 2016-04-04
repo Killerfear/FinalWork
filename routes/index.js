@@ -12,6 +12,11 @@ router.get('/problem/list', function(req, res, next) {
 	res.render('index');
 })
 
+/* Get Problem Detail */
+router.get('/problem/show/:problemId', function(req, res, next) {
+	res.render('index');
+})
+
 
 /* Get View Page */
 router.get('/views/:page', function(req, res, next) {

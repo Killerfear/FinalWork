@@ -29,24 +29,22 @@ var OJ_RESULT = ['Pending', 'Compiling', 'Runing', 'Compile Error', 'Runtime Err
 
 //获取题目列表
 router.get('/list/:page', function(req, res, next) {
-	console.log("zzz");
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		console.log("aiiaiai");
 		var user = req.user;
 
 		var page = req.params.page;
 		var skip = (page - 1) * 50;
 		var limit = 50;
 
-		var problems = yield DB.Problem.find({ isHidden : false })
-														.select("title problemId -_id")
-														.sort("problemId")
-														.skip(skip)
-														.limit(limit)
-														.exec();
+		var promises = yield [
+													 DB.Problem.find({ isHidden : false }).select("title problemId -_id").sort("problemId").skip(skip).limit(limit),
+													 redis.getAsync('problemCount')
+												 ];
+    var problems = promises[0];
+		var problemCount = promises[1];
 
-		var solved = user ? user.solved : [];
-		var unsolved = _.difference(user ? user.submit : [], solved);
+		var solved = user.solved || [];
+		var unsolved = _.difference(user.submit || [], solved);
 
 		solved.sort();
 		unsolved.sort();
@@ -62,30 +60,32 @@ router.get('/list/:page', function(req, res, next) {
 			else problem.state = 0;
 		}
 
-		console.log("zzz");
+
 
 		return {
-			problemCount: 502,
+			problemCount: problemCount,
 			problems: problems
 		}
 	}));
 });
 
 //获取题目描述
-router.get('/problem', function(req, res, next) {
+router.get('/data/:problemId', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
-		var problemId = req.query.problemId;
-		var problem = yield DB.Problem.findOne({ problemId: parseInt(problemId) });
+		console.log(user);
+		var problemId = req.params.problemId;
+		console.log(problemId)
+		var problem = yield DB.Problem.findOne({ problemId: parseInt(problemId) }, "-_id");
+		console.log(problem);
 
 		if (!problem || (!user.isAdmin && problem.isHidden)) throw { message: "题目不存在" }
 
 		console.log(problem);
 
 		return {
-			page: "problem-main",
-			problem: problem,
-			isAdmin: user.isAdmin
+			result: "sucess",
+			problem: problem
 		}
 	}));
 });
@@ -99,6 +99,7 @@ router.post('/submit', function(req, res, next) {
 		if (req.query.contestId) contestId = parseInt(req.query.contestId);
 
 		var problem = yield DB.Problem.findOne({ problemId: problemId });
+		console.log('problem:', problem);
 
 		if (!problem || (problem.isHidden && !contestId)) throw { message: "题目不存在" }
 
@@ -124,19 +125,15 @@ router.post('/submit', function(req, res, next) {
 
 		//console.log(solution);
 
-		var promises = [];
-		promises.push(solution.save());
 		user.submit.addToSet(problemId);
-		promises.push(user.save());
 
-		yield promises;
+		yield [ solution.save(), user.save() ];
 
 		socket.emit('judge', { user: user, solutionId: solution._id, srcCode: srcCode, problemId: problemId, judgeType: 0 });
+		console.log('emit done');
 		//res.redirect('/status');
 		return {
-			json: {
-				result: "success"
-			}
+			result: "success"
 		}
 	}));
 });
