@@ -17,7 +17,7 @@ OJControllers.controller('paginationCtrl', ['$rootScope', '$scope',
   }])
 
 
-OJControllers.controller('loginCtrl',
+OJControllers.controller('userloginCtrl',
   function($scope, $http, $location) {
     $scope.isLoginError = false;
     $scope.loginError = "";

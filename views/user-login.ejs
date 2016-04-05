@@ -1,0 +1,26 @@
+<link href="http://cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+
+<div class='container-fluid'>
+  <div class='container'>
+    <h2 class='form-signin-heading'>Sign in</h2>
+    <div class='alert alert-danger' ng-show='isLoginError'>{{loginError}}</div>
+
+    <div class='form-group'>
+      <div class='input-group'>
+        <span class='input-group-addon'><i class='fa fa-user' style="width: 14px;"></i></span>
+        <input type='text' ng-model='username' class='form-control' placeholder='Username' required autofocus></span>
+      </div>
+    </div>
+
+
+    <div class='form-group'>
+      <div class='input-group'>
+        <span class='input-group-addon'><i class='fa fa-key'></i></span>
+        <input type='password' ng-model='password' class='form-control' placeholder='Password' required />
+      </div>
+    </div>
+
+    <button class='btn btn-lg btn-primary btn-block' ng-disabled='isSubmitting'>Sign in</button>
+    <i class='fa fa-arrow-circle-right'><a href='user/signup'> Register</a> </i>
+  </div>
+</div>

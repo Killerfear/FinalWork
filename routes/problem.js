@@ -93,6 +93,7 @@ router.get('/data/:problemId', function(req, res, next) {
 //提交代码
 router.post('/submit', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		console.log('zzz');
 		var user = req.user;
 		var problemId = parseInt(req.body.problemId);
 		var contestId = null;

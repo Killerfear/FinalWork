@@ -16,6 +16,10 @@ OJApp.config(['$routeProvider',
       when('/problem/show/:problemId', {
         templateUrl: '/views/problem-show',
         controller: 'problemshowCtrl'
+      }).
+      when('/user/login', {
+        templateUrl: '/views/user-login',
+        controller: 'userloginCtrl'
       })
     //  when('/', {
     //    redirectTo: '/problem/list/'
