@@ -18,7 +18,6 @@ UserSchema = new Schema
   submit: { type: [Number], default: [] }
   isAdmin: { Boolean, default: false }
   ip: String
-  sault: String
   registTime: String
 
 
@@ -31,7 +30,9 @@ ProblemSchema = new Schema
   sampleOutput: String
   judgeType: Number
   isHidden: Boolean
+  #unit: mb
   memLimit: Number
+  #unit: s
   timeLimit: Number
 
 SolutionSchema = new Schema
@@ -39,9 +40,9 @@ SolutionSchema = new Schema
   problemId: Number
   #0: pending 1: compiling 2: running 3: compile error 4: runtime error 5: memory limit exceed 6: time limit exceed 7: output limit exceed 8: accept 9: Wrong answer 10: presentation error
   result: Number
-  #内存使用
+  #内存使用: B
   memory: Number
-  #运行时间
+  #运行时间 : s
   time: Number
   codeLength: Number
   srcCode: String

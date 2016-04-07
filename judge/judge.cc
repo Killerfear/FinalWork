@@ -176,7 +176,7 @@ int isInFile(const char fname[])
 		return l - 3;
 }
 
-void prepareFiles(const char * filename, int namelen, const string & fullPath, const string &  workDir, 
+void prepareFiles(const char * filename, int namelen, const string & fullPath, const string &  workDir,
 						string & infile, string & outfile, string & userfile)
 {
 	//              printf("ACflg=%d %d check a file!\n",ACflg,solutionId);
@@ -251,7 +251,7 @@ void runSolution(const string & workDir, int & timeLimit, int & usedtime, int & 
 
 
 void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int isspj,
-		const string & userfile, const string & outfile, int & topmemory, int memLimit, 
+		const string & userfile, const string & outfile, int & topmemory, int memLimit,
 		int & usedtime, int timeLimit, int & PEflg, const string & workDir)
 {
 	// parent
@@ -631,8 +631,7 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 	printf("%d\n", ACflg);
 
 
-	topmemory >>= 10;
-	//usedtime(ms), topmemory(kb), Acflg, 
+	//usedtime(ms), topmemory(b), Acflg, 
 
 	Local<Object> judgeResult = Object::New(isolate);
 	judgeResult->Set(String::NewFromUtf8(isolate, "time"), Number::New(isolate, usedtime));

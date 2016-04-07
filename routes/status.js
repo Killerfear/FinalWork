@@ -20,7 +20,13 @@ bluebird.promisifyAll(redis);
 router.get('/search/:page', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var query = _.pick(req.query, "username", "problemId", "result", "contestId");
-		var skip = (parseInt(req.query.page) - 1) * 50;
+
+		query = _.omitBy(query, function(data) {
+			return data.toString().length == 0;
+		});
+		console.log(query);
+
+		var skip = (parseInt(req.params.page) - 1) * 50;
 		var limit = 50;
 
 		var promises = yield [ DB.Solution.find(query) .select("-_id solutionId problemId username result memory time submitTime srcCode")
@@ -34,7 +40,9 @@ router.get('/search/:page', function(req, res, next) {
 		for (var i in solutions) {
 			var solution = solutions[i] = solutions[i].toObject();
 			solution.resultText = OJ_RESULT[solution.result];
-			if (solution.userName != user.userName) solution.srcCode = null;
+			solution.codeLength = solution.srcCode.length;
+			solution.memory >>= 10;
+			delete solution.srcCode;
 		}
 
 		return {
@@ -44,5 +52,23 @@ router.get('/search/:page', function(req, res, next) {
 		}
 	}));
 });
+
+router.get('/code/:solutionId', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var user = req.user;
+		var solutionId = parseInt(req.params.solutionId);
+		var solution = yield DB.Solution.findOne({solutionId: solutionId})
+																		.select("srcCode username");
+	  var srcCode = "";
+		if (solution && user.username && solution.username == user.username) {
+			srcCode = solution.srcCode;
+		}
+
+		return {
+			result: "success",
+			srcCode: srcCode
+		}
+	}));
+})
 
 module.exports = router;

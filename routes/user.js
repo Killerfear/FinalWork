@@ -58,7 +58,9 @@ router.post('/login', function(req, res, next) {
 router.get('/logout', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		req.session.destroy();
-		res.redirect('/user/login');
+		return {
+			result: "success"
+		}
 	}));
 });
 
@@ -96,9 +98,9 @@ router.post('/signup', function(req, res, next) {
 });
 
 //获取个人信息
-router.get('/profile', function(req, res, next) {
+router.get('/data', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		return req.user;
+		return _.omit(req.user, "salt", "password", "ip");
 	}));
 });
 
@@ -136,5 +138,7 @@ router.post('/profile/password', function(req, res, next) {
 		return yield user.save();
 	}));
 });
+
+
 
 module.exports = router;

@@ -1,3 +1,5 @@
+<div ng-include="'/views/navbar.ejs'"> </div>
+
 <div ng-include="'/views/pagination.ejs'"></div>
 
 <div class='container'>
@@ -24,14 +26,21 @@
         <td><a href="#">{{ solution.username }}</a></td>
         <td><a href="/#/problem/show/{{ solution.problemId }}">{{ solution.problemId }}</a></td>
         <td>{{ solution.resultText }}</td>
-        <td>{{ solution.memory }} B</td>
-        <td>{{ solution.time }} MS</td>
+        <td><span ng-show="solution.result > 3">{{ solution.memory }} KB</span></td>
+        <td><span ng-show="solution.result > 3">{{ solution.time }} MS</span></td>
         <td>
-          <a ng-show='showHref' ng-click='showCode()'>{{ solution.codeLength }}</a>
-          <span ng-hide='showHref'>{{solution.codeLength}}</span>
+          <a href="javascript:void(0);" ng-show='solution.username == username' ng-click='showCode(solution.solutionId)'>{{ solution.codeLength }} B</a>
+          <span ng-hide='solution.username == username'>{{solution.codeLength}} B</span>
         </td>
         <td>{{ solution.submitTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
       </tr>
     </tbody>
   </table>
+
+  <script type="text/ng-template" id="codeModal.html">
+      <div class="modal-body">
+        <pre>{{srcCode}}</pre>
+      </div>
+  </script>
+
 </div>

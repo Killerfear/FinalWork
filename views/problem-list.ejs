@@ -1,17 +1,18 @@
 
+<div ng-include="'/views/navbar.ejs'"> </div>
 
 <div ng-include="'/views/pagination.ejs'"></div>
 
-<table class='table table-striped table-bordered'>
+<table class='table'>
   <thead>
-    <th class='col-md-1'>ID</th>
-    <th>Title</th>
+    <th class='col-sm-1'>ID</th>
+    <th class='col-sm-11'>Title</th>
   </thead>
   <tbody>
     <tr ng-repeat="problem in problems"
     ng-class="{'success': problem.status == 1, 'danger': problem.status == 2 }">
-      <td>{{problem.problemId}}</td>
-      <td><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
+      <td class='col-sm-1'>{{problem.problemId}}</td>
+      <td class='col-sm-11'><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
     </tr>
 </tbody>
 </table>

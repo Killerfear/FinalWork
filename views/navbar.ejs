@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" ng-controller='navCtrl'>
   <div class="row">
     <div class="col-md-12">
       <div class="navbar navbar-default navbar-fixed-top navbar-inverse">
@@ -35,7 +35,7 @@
                 <a href="/#/user/profile/{{username}}">{{username}}</a>
               </li>
               <li ng-show='isLogin'>
-                <a href="/#/user/logout">Logout</a>
+                <a href="javascript:void(0);" ng-click="logout()">Logout</a>
               </li>
             </ul>
           </div>

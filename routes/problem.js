@@ -115,8 +115,6 @@ router.post('/submit', function(req, res, next) {
 			username: user.username,
 			problemId: problemId,
 			ip: req.ip,
-			memory: 0,
-			time: 0,
 			submitTime: new Date().getTime(),
 			srcCode: srcCode,
 			codeLength: srcCode.length,
