@@ -18,7 +18,7 @@ OJControllers.controller('paginationCtrl', ['$rootScope', '$scope',
 
 
 OJControllers.controller('userloginCtrl',
-  function($scope, $http, $location) {
+  function($scope, $http, $window, $rootScope) {
     $scope.isLoginError = false;
     $scope.loginError = "";
     $scope.isSubmitting = false;
@@ -26,13 +26,15 @@ OJControllers.controller('userloginCtrl',
     $scope.login = function() {
       $scope.isSubmitting = true;
       var loginInfo = {
-        userName: $scope.username,
+        username: $scope.username,
         password: $scope.password
       }
-      $http.post('/login', loginInfo)
+      $http.post('/user/login', loginInfo)
         .success(function(data) {
           if (data.result == 'success') {
-            $window.location.href='problemset'
+            $window.location.href='/#/problem/list'
+            $rootScope.isAdmin = result.isAdmin;
+            $rootScope.username = result.username;
           } else if (data.result == 'fail') {
             $scope.isSubmitting = false;
             $scope.isLoginError = true;
@@ -126,3 +128,28 @@ OJControllers.controller('submitModalCtrl',
       $uibModalInstance.dismiss('cancel');
     }
   });
+
+OJControllers.controller('statuslstCtrl',
+  function($scope, $uibModal, $http, $rootScope, $location) {
+    $scope.solutions = [];
+    $rootScope.currentPage = 1;
+    if (!$scope.query) $scope.query = $location.search();
+
+    $scope.getItems = $rootScope.getItems = function() {
+      var url = new URI('/status/search/' + $rootScope.currentPage).addSearch($scope.query).toString();
+      console.log(url);
+      $http.get(url)
+           .success(function(data) {
+             if (data.result == 'success') {
+               $scope = _.assign($scope, _.omit(data, "result"));
+               console.log($scope);
+               $rootScope.totalItems = data.solutionCount;
+             } else {
+               alert('失败:' + data.toString);
+             }
+           })
+           .error(function(err) {
+             alert("错误:" + err);
+           })
+    }
+  })

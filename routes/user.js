@@ -38,12 +38,15 @@ router.post('/login', function(req, res, next) {
 			}
 		}
 
+		console.log('zzz');
+
 		if (req.session) req.session.regenerate(function(err) { console.log(err) });
 
-		req.session.uid = user._id;
+		req.session.uid = user.username;
 
 		req.session.save();
 		console.log(req.session);
+		console.log('yyy');
 
 		return {
 			result: "success"

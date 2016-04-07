@@ -10,8 +10,8 @@
   <tbody>
     <tr ng-repeat="problem in problems"
     ng-class="{'success': problem.status == 1, 'danger': problem.status == 2 }">
-    <td>{{problem.problemId}}</td>
-    <td><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
-  </tr>
+      <td>{{problem.problemId}}</td>
+      <td><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
+    </tr>
 </tbody>
 </table>

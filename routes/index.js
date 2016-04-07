@@ -17,6 +17,11 @@ router.get('/problem/show/:problemId', function(req, res, next) {
 	res.render('index');
 })
 
+/* Get Status List */
+router.get('/status/list', function(req, res, next) {
+	res.render('/index');
+})
+
 
 /* Get View Page */
 router.get('/views/:page', function(req, res, next) {

@@ -1,0 +1,37 @@
+<div ng-include="'/views/pagination.ejs'"></div>
+
+<div class='container'>
+  <table class='table'>
+    <thead>
+      <th>#</th>
+      <th>User</th>
+      <th>Problem</th>
+      <th>Result</th>
+      <th>Memory</th>
+      <th>Time</th>
+      <th>Length</th>
+      <th>Submit Time</th>
+    </thead>
+    <tbody>
+      <tr>
+        <td></td>
+        <td><input type='text' ng-model='query.username' ng-change='getItems()'></td>
+        <td><input type='text' ng-model='query.problemId' ng-change='getItems()'></td>
+        <td><input type='text' ng-model='query.result' ng-change='getItems()'></td>
+      </tr>
+      <tr ng-repeat='solution in solutions'>
+        <td>{{solution.solutionId}}</td>
+        <td><a href="#">{{ solution.username }}</a></td>
+        <td><a href="/#/problem/show/{{ solution.problemId }}">{{ solution.problemId }}</a></td>
+        <td>{{ solution.resultText }}</td>
+        <td>{{ solution.memory }} B</td>
+        <td>{{ solution.time }} MS</td>
+        <td>
+          <a ng-show='showHref' ng-click='showCode()'>{{ solution.codeLength }}</a>
+          <span ng-hide='showHref'>{{solution.codeLength}}</span>
+        </td>
+        <td>{{ solution.submitTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

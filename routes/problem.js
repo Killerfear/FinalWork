@@ -23,7 +23,7 @@ var LogicHandler = require('../lib/logic-handler');
 var DB = require('../lib/mongoose-schema');
 
 bluebird.promisifyAll(redis);
-var OJ_RESULT = ['Pending', 'Compiling', 'Runing', 'Compile Error', 'Runtime Error', 'Memory Limit Exceed', 'Time Limit Exceed', 'Output Limit Exceed', 'Accept', 'Wrong Answer', 'Presentation Error' ];
+var OJ_RESULT = require('../lib/global').OJ_RESULT;
 
 
 
@@ -112,7 +112,7 @@ router.post('/submit', function(req, res, next) {
 		var srcCode = req.body.srcCode;
 
 		var solution = new DB.Solution({
-			userName: user.username,
+			username: user.username,
 			problemId: problemId,
 			ip: req.ip,
 			memory: 0,
@@ -121,16 +121,25 @@ router.post('/submit', function(req, res, next) {
 			srcCode: srcCode,
 			codeLength: srcCode.length,
 			contestId: contestId,
-			result: OJ_RESULT[0]
+			result: 0
 		});
 
 		//console.log(solution);
 
 		user.submit.addToSet(problemId);
 
-		yield [ solution.save(), user.save() ];
+		yield [ solution.save(), user.save(), redis.incrAsync('solutionCount') ];
 
-		socket.emit('judge', { user: user, solutionId: solution._id, srcCode: srcCode, problemId: problemId, judgeType: 0 });
+		var judgeData = {
+			user: user,
+			solutionId: solution.solutionId,
+			srcCode: srcCode,
+			problemId: problemId,
+			judgeType: 0,
+			memLimit: problem.memLimit,
+			timeLimit: problem.timeLimit
+		}
+		socket.emit('judge', judgeData);
 		console.log('emit done');
 		//res.redirect('/status');
 		return {

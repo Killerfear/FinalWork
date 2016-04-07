@@ -20,8 +20,12 @@ OJApp.config(['$routeProvider',
       when('/user/login', {
         templateUrl: '/views/user-login',
         controller: 'userloginCtrl'
+      }).
+      when('/status/list', {
+        templateUrl: '/views/status-list',
+        controller: 'statuslstCtrl'
+      }).
+      when('/', {
+        redirectTo: '/problem/list/'
       })
-    //  when('/', {
-    //    redirectTo: '/problem/list/'
-    //  })
   }]);

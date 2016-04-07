@@ -6,7 +6,7 @@ var bcrypt = require('bcrypt');
 
 
 exports.getByName = co.wrap(function * (name) {
-	return yield db.User.findOne({ username: name });
+	return yield db.User.findOne({ username: name }, "-_id");
 });
 
 exports.authenticate = co.wrap(function*(name, pass) {
@@ -21,16 +21,18 @@ exports.authenticate = co.wrap(function*(name, pass) {
 });
 
 exports.getBySession = co.wrap(function * (session) {
+	console.log('getBySession');
 	var user;
 	if (session && session.uid) {
-		var user = exports.getById(session.uid);
+		console.log('getBySession getById');
+		user = exports.getByName(session.uid);
 	}
 	return user;
 });
 
 
 exports.updateByName = co.wrap(function * (user, option) {
-	return yield db.User.findOnAndUpdate('User', { _id: user._id } , { $set: user }, option);
+	return yield db.User.findOnAndUpdate('User', { username: user.username } , { $set: user }, option);
 });
 
 exports.create = co.wrap(function * (user) {

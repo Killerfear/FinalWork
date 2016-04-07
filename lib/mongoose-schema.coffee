@@ -14,9 +14,9 @@ UserSchema = new Schema
   salt: String
   nickname: String
   email: String
-  solved: [ type: String, ref: "Problem"]
-  submit: [ type: String, ref: "Problem"]
-  isAdmin: Boolean
+  solved: [Number]
+  submit: { type: [Number], default: [] }
+  isAdmin: { Boolean, default: false }
   ip: String
   sault: String
   registTime: String
@@ -31,6 +31,8 @@ ProblemSchema = new Schema
   sampleOutput: String
   judgeType: Number
   isHidden: Boolean
+  memLimit: Number
+  timeLimit: Number
 
 SolutionSchema = new Schema
   username: String
@@ -45,6 +47,7 @@ SolutionSchema = new Schema
   srcCode: String
   #ce info
   error: String
+  contestId: Number
 
   submitTime: Number
   ip: String
@@ -61,15 +64,15 @@ ContestSchema = new Schema
 
 #create index
 
-UserSchema.index { username: "hashed" }, { unique: true }
+UserSchema.index { username: "hashed" }
 
 ProblemSchema.index { problemId: 1}, { unique: true }
 
-SolutionSchema.index { solutionId: -1 }
 SolutionSchema.index { username: 1, problemId: 1, result: 1, contestId: 1, solutionId: -1 }
 SolutionSchema.index { problemId: 1, result: 1, contestId: 1, solutionId: -1 }
 SolutionSchema.index { result: 1, contestId: 1, solutionId: -1 }
 SolutionSchema.index { contestId: 1, solutionId: -1 }
+SolutionSchema.index { solutionId: -1 }, { unique: true }
 
 ContestSchema.index { startTime: -1 }
 ContestSchema.index { contestId: "hashed" }
