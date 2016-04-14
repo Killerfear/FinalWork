@@ -3,29 +3,43 @@
 var OJApp = angular.module('OJApp', [
   "ui.bootstrap",
   'ngRoute',
-  'OJControllers'
+  'OJControllers',
+  'OJDirective'
 ]);
 
+
 OJApp.config(['$routeProvider',
-  function($routeProvider) {
-    $routeProvider.
-      when('/problem/list', {
-        templateUrl: '/views/problem-list',
-        controller: 'problemlstCtrl'
-      }).
-      when('/problem/show/:problemId', {
-        templateUrl: '/views/problem-show',
-        controller: 'problemshowCtrl'
-      }).
-      when('/user/login', {
-        templateUrl: '/views/user-login',
-        controller: 'userloginCtrl'
-      }).
-      when('/status/list', {
-        templateUrl: '/views/status-list',
-        controller: 'statuslstCtrl'
-      }).
-      when('/', {
-        redirectTo: '/problem/list/'
-      })
-  }]);
+function($routeProvider) {
+  $routeProvider.
+  when('/problem/list', {
+    templateUrl: '/views/problem-list',
+    controller: 'problemlstCtrl'
+  }).
+  when('/problem/show/:problemId', {
+    templateUrl: '/views/problem-show',
+    controller: 'problemshowCtrl'
+  }).
+  when('/user/login', {
+    templateUrl: '/views/user-login',
+    controller: 'userloginCtrl'
+  }).
+  when('/status/list', {
+    templateUrl: '/views/status-list',
+    controller: 'statuslstCtrl'
+  }).
+  when('/admin/problem', {
+    templateUrl: '/views/admin-problem',
+    controller: 'adminproblemCtrl'
+  }).
+  when('/admin/contest', {
+    templateUrl: '/views/admin-contest',
+    controller: 'admincontestCtrl'
+  }).
+  when('/admin/problem/edit', {
+    templateUrl: '/views/admin-problem-edit',
+    controller: 'adminproblemeditCtrl'
+  }).
+  when('/', {
+    redirectTo: '/problem/list/'
+  })
+}]);

@@ -1,0 +1,22 @@
+<div ng-include="'/views/navbar.ejs'"> </div>
+<div ng-include="'/views/pagination.ejs'"></div>
+
+<table class='table'>
+  <thead>
+    <th class='col-sm-1'>#</th>
+    <th class='col-sm-5'></th>
+    <th class='col-sm-3'>Start time</th>
+    <th class='col-sm-2'>Length</th>
+    <th class='col-sm-1'>type</th>
+  </thead>
+  <tbody>
+    <tr ng-repeat="contest in contests">
+      <td class='col-md-12'>{{contest.contestId}}</td>
+      <td class='col-sm-12'><a href="/#/contest/show/{{contest.contestId}}">{{contest.title}}</td>
+      <td class='col-sm-12'>{{contest.startTime | date: 'yyyy-MM-DD HH:mm:ss'}}</td>
+      <td class='col-sm-12'>{{contest.endTime - contest.startTime}}</td>
+      <td class='col-sm-12' ng-hide="contest.isPrivate">Public</td>
+      <td class='col-sm-12' ng-show="contest.isPrivate">Private</td>
+    </tr>
+</tbody>
+</table>

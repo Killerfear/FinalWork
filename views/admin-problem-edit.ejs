@@ -1,0 +1,103 @@
+
+<div ng-include="'views/navbar.ejs'"></div>
+
+<div class="section">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<h1>{{pageTitle}}</h1>
+				<form name='editor' class="form-horizontal" role="form">
+					<div class="form-group has-feedback">
+						<div class="col-sm-2">
+							<label class="control-label">Title</label>
+						</div>
+						<div class="col-sm-6">
+							<input type="text" class="form-control" ng-model='problem.title' placeholder="Title" autofocus required>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-2">
+							<label class="control-label">Time Limit</label>
+						</div>
+						<div class="col-sm-3">
+							<input type="text" class="form-control" placeholder="Time Limit (s)" ng-model='problem.timeLimit' required>
+						</div>
+						<div class="col-sm-2">
+							<label for="inputPassword3" class="control-label">S</label>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-2">
+							<label class="control-label">Memory Limit</label>
+						</div>
+						<div class="col-sm-3">
+							<input type="text" class="form-control" placeholder="Memory Limit (MB)" ng-model='problem.memLimit' required>
+						</div>
+						<div class="col-sm-2">
+							<label class="control-label">MB</label>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-2">
+							<label class="control-label">Visibility
+								<br>
+							</label>
+						</div>
+						<div class="col-sm-2">
+							<select class="form-control" ng-model='problem.isHidden' ng-options='visible.value as visible.text for visible in visibles'>
+								<option value="0">visible</option>
+								<option value="1">invisible</option>
+							</select>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-2">
+							<label class="control-label">Description</label>
+						</div>
+						<div class="col-sm-10">
+							<ckEditor ng-model='problem.description'></ckEditor>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-2">
+							<label class="control-label">Input</label>
+						</div>
+						<div class="col-sm-10">
+							<ckeditor class="form-control" ng-model='problem.input'></ckeditor>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-2">
+							<label class="control-label">Output</label>
+						</div>
+						<div class="col-sm-10">
+							<ckeditor class="form-control" ng-model='problem.output'></ckeditor>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-2">
+							<label class="control-label">Sample Input</label>
+						</div>
+						<div class="col-sm-10">
+							<textarea class="form-control" ng-model='problem.sampleInput'></textarea>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-2">
+							<label class="control-label">Sample Output</label>
+						</div>
+						<div class="col-sm-10">
+							<textarea class="form-control" ng-model='problem.sampleOutput'></textarea>
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-offset-2 col-sm-10">
+							<button type="submit" class="btn btn-default" ng-click='submit()'>Submit</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+</div>

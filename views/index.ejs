@@ -10,6 +10,7 @@
 
   <link href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" rel="stylesheet">
   <link href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+  <link href="http://cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
 
   <script src="http://cdn.bootcss.com/jquery/2.2.1/jquery.js"></script>
   <script src="http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
@@ -21,11 +22,23 @@
   <script src="http://cdn.bootcss.com/angular-ui-bootstrap/1.2.1/ui-bootstrap-tpls.min.js"></script>
   <script src="http://cdn.bootcss.com/lodash.js/4.6.1/lodash.min.js"></script>
   <script src="http://cdn.bootcss.com/URI.js/1.17.1/URI.min.js"></script>
-
+  <script src="bower_components/angular-load/angular-load.js"></script>
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)'], ['$$','$$']],
+        skipTags: []
+      }
+    });
+  </script>
+  <script type="text/javascript" async
+    src="http://cdn.bootcss.com/mathjax/2.6.1/MathJax.js?config=TeX-AMS_CHTML">
+  </script>
 
 
   <script src='/javascript/app.js'></script>
   <script src='/javascript/controller.js'></script>
+  <script src='/javascript/directive.js'></script>
 
   <style>
     body {
@@ -34,6 +47,7 @@
   </style>
 </head>
 <body>
+
   <div class='container'>
     <div ng-view></div>
   </div>

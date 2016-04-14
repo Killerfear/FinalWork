@@ -26,20 +26,37 @@ router.get("*", function(req, res, next) {
 });
 
 //管理员主页 类似题目列表页面
-router.get("/", function(req, res, next) {
+router.get("/problem/list/:page", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var page = parseInt(req.query.page);
+		var page = parseInt(req.params.page);
 		var skip = 50 * (page - 1);
 		var limit = 50;
 
-		var problems = yield DB.Problem.find()
-														  .sort("problemId")
-															.skip(skip)
-															.limit(limit)
-															.exec();
-		var problemCount = (yield DB.Problem.stats()).count;
+		console.log("find");
 
-		return { page: "admin-main", problems: problems, problemNum : problemCount, username: req.user.username }
+		var promises = yield [
+
+		]
+
+		var promises = yield [ DB.Problem.find()
+														  .sort("problemId")
+															.select("title problemId")
+															.skip(skip)
+															.limit(limit),
+													 redis.getAsync('problemCount')
+												]
+
+		var problems = promises[0];
+		var problemCount = promises[1];
+
+
+		console.log("return");
+
+		return {
+			result: "success",
+			problems: problems,
+			problemCount: problemCount
+		}
 	}));
 });
 
@@ -63,33 +80,39 @@ router.get("/problem/edit", function(req, res, next) {
 });
 
 
+router.get('/problem/data', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var problemId = parseInt(req.query.problemId);
+		var problem = yield DB.Problem.findOne({ problemId: problemId })
+																  .select('-_id problemId title timeLimit memLimit isHidden description input output sampleInput sampleOutput');
+		return {
+			problem: problem
+		}
+	}));
+});
+
 //新增题目描述
 router.post("/problem/add", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var param = req.body;
+		var problem = req.body.problem;
 
-		var sampleInput = param.sampleInput;
-		var sampleOutput = param.sampleOutput;
+		var sampleInput = problem.sampleInput;
+		var sampleOutput = problem.sampleOutput;
 
 		var id = yield redis.incrAsync("problemCount");
 		console.log(id);
 
-		var path = "./problem/" + id;
+		var filePath = path.join("./problem/", id.toString());
 
-		yield fs.mkdirAsync(path, 600);
-
-		var problem = _.pick(param,
-			"title", "description", "input", "output", "sampleInput", "sampleOutput", "isHidden",
-			"timeLimit", "memLimit");
-		problem._id = id;
+		yield fs.mkdirAsync(filePath, 600);
 
 		yield [
-			fs.writeFileAsync(path + "/sample.in", sampleInput, "utf-8"),
-			fs.writeFileAsync(path + "/sample.out", sampleOutput, "utf-8"),
-			mongo.addOne("Problem", problem)
+			fs.writeFileAsync(filePath + "/sample.in", sampleInput, "utf-8"),
+			fs.writeFileAsync(filePath + "/sample.out", sampleOutput, "utf-8"),
+			(new DB.Problem(problem)).save()
 		]
 
-		res.redirect("edit");
+		return {};
 	}));
 });
 
@@ -97,27 +120,25 @@ router.post("/problem/add", function(req, res, next) {
 router.post("/problem/update", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 
-		var setter = _.pick(req.body,
-			"title", "description", "input", "output", "sampleInput", "sampleOutput", "isHidden",
-			"timeLimit", "memLimit");
+		console.log("Start");
+		var problem = req.body.problem;
 
-		var problemId = parseInt(req.body.problemId);
-		if (isNaN(problemId)) throw { message: "参数不合法" }
+		var problemId = parseInt(problem.problemId);
+		if (problemId != problem.problemId) throw { message: "参数不合法" }
 
-		var arr = [ mongo.findOneAndUpdate("Problem", { _id: problemId }, { $set: setter }) ];
+		console.log(problem);
+		console.log('problemId:', problemId);
+		var updateRes = yield DB.Problem.findOneAndUpdate({ problemId: problemId }, problem);
+		console.log(updateRes);
 
-		var path = "./problem/" + problemId;
+		var filePath = path.join("./problem/", problemId.toString());
 
-		if (setter.sampleInput) {
-			arr.push(fs.writeFileAsync(path + "/sample.in", setter.sampleInput, "utf-8"));
-		}
+		yield [
+			fs.writeFileAsync(filePath + "/sample.in", problem.sampleInput, "utf-8"),
+			fs.writeFileAsync(filePath + "/sample.out", problem.sampleOutput, "utf-8")
+		]
 
-		if (setter.sampleOutput) {
-			arr.push(fs.writeFileSync(path + "/sample.out", setter.sampleOutput, "utf-8"));
-		}
-
-		yield arr;
-		res.redirect("back");
+		return {};
 	}));
 });
 
@@ -125,12 +146,19 @@ router.post("/problem/update", function(req, res, next) {
 router.get("/problem/delete", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var problemId = parseInt(req.query.problemId);
-		var path = __dirname + "/problem" + parseInt(req.query.problemId);
+		if (problemId.toString() != req.query.problemId) {
+			return next({message : "problemId 参数有误" })
+		}
+
+		var problemPath = path.join(__dirname, "/../problem", problemId.toString());
+		console.log("Deleted Problem Path:", problemPath);
 		yield [
-			mongo.findOneAndDelete("Problem", { _id: problemId }),
-			child_process.execAsync("rm -rf "+ path)
+			DB.Problem.findOneAndDelete({ problemId: problemId }),
+			child_process.execAsync("rm -rf "+ problemPath)
 		]
-		res.redirect("back");
+		return {
+			result: "success"
+		}
 	}));
 });
 
@@ -141,7 +169,7 @@ router.get("/samplelist", function(req, res, next) {
 		if (!user.isAdmin) throw { message: "无权限" }
 
 		var problemId = req.query.problemId;
-		var filePath = path.resolve("problem", problemId);
+		var filePath = path.resolve("problem", problemId.toString());
 		var files = yield fs.readdirAsync(filePath);
 
 		if (!_.isArray(files)) throw files;

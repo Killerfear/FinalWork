@@ -214,3 +214,98 @@ function($scope, $uibModalInstance, $http, solutionId) {
     console.log("错误:" + err)
   })
 });
+
+
+OJControllers.controller('adminproblemCtrl',
+function($scope, $http, $rootScope, $uibModal) {
+  $rootScope.getItems = function() {
+    $http.get('/admin/problem/list/' + $rootScope.currentPage)
+         .success(function(data) {
+           $scope.problems = data.problems;
+           $rootScope.totalItems = data.problemCount;
+         })
+         .error(function(err) {
+           console.log("错误:" + err);
+         })
+  }
+
+  $scope.open = function(title, problemId) {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      templateUrl: 'confirmModal.html',
+      controller: 'confirmModalCtrl',
+      resolve: {
+        title: function() {  return title; },
+        problemId: function() { return problemId; }
+      }
+    });
+    console.log("instance");
+
+    modalInstance.result.then(function () {
+      _.remove($scope.problems, function(problem) { return problem.problemId == problemId; });
+    });
+
+  }
+})
+
+OJControllers.controller('confirmModalCtrl',
+function($scope, $uibModalInstance, $http, title, problemId) {
+  $scope.title = title;
+  $scope.problemId = problemId;
+
+  $scope.ok = function() {
+    $http.get('/admin/problem/delete?problemId=' + problemId)
+         .success(function(data) {
+           $uibModalInstance.close();
+         })
+         .error(function(err) {
+           alert("错误:" + err);
+         })
+  };
+
+  $scope.cancel = function() {
+    $uibModalInstance.dismiss();
+  }
+});
+
+OJControllers.controller('adminproblemeditCtrl',
+function($scope, $http, $location, $window) {
+  var param = $location.search();
+  var problemId = param.problemId;
+  $scope.problem = { isHidden: true };
+  if (problemId) {
+    $scope.pageTitle = 'Edit Problem'
+    var url = '/admin/problem/data?problemId=' + problemId;
+    console.log(url);
+    $http.get(url)
+         .success(function(data) {
+           if (data.problem)
+             $scope.problem = data.problem;
+         })
+         .error(function(err) {
+           alert('错误：' + err);
+         })
+  } else {
+    $scope.pageTitle = 'Add Problem';
+  }
+
+  $scope.visibles = [{ text: 'Visible', value: false }, { text: 'Invisible', value: true } ];
+  $scope.submit = function() {
+    if (!$scope.editor.$valid) return;
+    console.log($scope.problem.description);
+    if (!problemId) {
+      //add Problem
+      $http.post('/admin/problem/add', { problem: $scope.problem })
+           .success(function(data){
+             $window.location.href = '/#/admin/problem/';
+           })
+           .error(function(err){alert('错误:' + err); })
+    } else {
+      //update Problem
+
+      $http.post('/admin/problem/update', { problem: $scope.problem })
+           .success(function(data) {})
+           .error(function(err) { alert('错误' + err); })
+    }
+  }
+});

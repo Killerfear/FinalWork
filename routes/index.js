@@ -19,7 +19,12 @@ router.get('/problem/show/:problemId', function(req, res, next) {
 
 /* Get Status List */
 router.get('/status/list', function(req, res, next) {
-	res.render('/index');
+	res.render('index');
+})
+
+/* Get Admin Page */
+router.get('/admin/problem', function(req, res, next) {
+	res.render('index');
 })
 
 
