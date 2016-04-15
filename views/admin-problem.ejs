@@ -9,16 +9,20 @@
     <thead>
       <th></th>
       <th></th>
+      <th></th>
       <th class='col-sm-1'>ID</th>
       <th class='col-sm-11'>Title</th>
     </thead>
     <tbody>
       <tr ng-repeat="problem in problems">
         <td>
-          <a href='/#/admin/problem/edit'><i class='fa fa-pencil-square-o' style='font-size: 20px;'></i></a>
+          <a class='glyphicon glyphicon-edit' href='/#/admin/problem/edit?problemId={{problem.problemId}}'></a>
         </td>
         <td>
-          <a style="font-size: 20px;" href='javascript:void(0);' class='fa fa-trash-o' ng-click='open(problem.title,problem.problemId)'></a>
+          <a class='glyphicon glyphicon-trash' href='javascript:void(0);' ng-click='open(problem.title,problem.problemId)'></a>
+        </td>
+        <td>
+          <a href='/#/admin/problem/testData/' class='glyphicon glyphicon-file'></a>
         </td>
         <td class='col-sm-1'>{{problem.problemId}}</td>
         <td class='col-sm-11'><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
