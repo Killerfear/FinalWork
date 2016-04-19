@@ -106,7 +106,7 @@ router.post("/problem/add", function(req, res, next) {
 		var id = yield redis.incrAsync("problemCount");
 		console.log(id);
 
-		var filePath = path.join("./problem/", id.toString());
+		var filePath = path.join(__dirname, "../problem/", id.toString());
 
 		yield fs.mkdirAsync(filePath, 600);
 
@@ -135,7 +135,7 @@ router.post("/problem/update", function(req, res, next) {
 		var updateRes = yield DB.Problem.findOneAndUpdate({ problemId: problemId }, problem);
 		console.log(updateRes);
 
-		var filePath = path.join("./problem/", problemId.toString());
+		var filePath = path.join(__dirname, "../problem/", problemId.toString());
 
 		yield [
 			fs.writeFileAsync(filePath + "/sample.in", problem.sampleInput, "utf-8"),
@@ -154,10 +154,10 @@ router.get("/problem/delete", function(req, res, next) {
 			return next({message : "problemId 参数有误" })
 		}
 
-		var problemPath = path.join(__dirname, "/../problem", problemId.toString());
+		var problemPath = path.join(__dirname, "../problem", problemId.toString());
 		console.log("Deleted Problem Path:", problemPath);
 		yield [
-			DB.Problem.findOneAndDelete({ problemId: problemId }),
+			DB.Problem.findOneAndRemove({ problemId: problemId }),
 			child_process.execAsync("rm -rf "+ problemPath)
 		]
 		return {
