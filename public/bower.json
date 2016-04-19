@@ -21,6 +21,7 @@
     "angular-resource": "^1.5.3",
     "bootstrap": "^3.3.6",
     "angular-paging": "^2.2.1",
-    "angular-load": "^0.4.1"
+    "angular-load": "^0.4.1",
+    "remodal": "^1.0.7"
   }
 }

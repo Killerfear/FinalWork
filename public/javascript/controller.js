@@ -1,37 +1,37 @@
 
-var OJControllers = angular.module('OJControllers', []);
+var OJControllers = angular.module('OJControllers', ['ngFileUpload']);
 
 OJControllers.controller('navCtrl',
 function($rootScope, $http, $scope, $window) {
   $http.get('/user/data')
-       .success(function(data) {
-         console.log("zzzz");
-         $scope.isAdmin = $rootScope.isAdmin = data.isAdmin;
-         $scope.username = $rootScope.username = data.username;
-         if (data.username && data.username.length) {
-           $scope.isLogin = $rootScope.isLogin = true;
-         }
-         console.log($rootScope);
-       })
-       .error(function(err) {
-         alert("错误:" + err);
-       })
+  .success(function(data) {
+    console.log("zzzz");
+    $scope.isAdmin = $rootScope.isAdmin = data.isAdmin;
+    $scope.username = $rootScope.username = data.username;
+    if (data.username && data.username.length) {
+      $scope.isLogin = $rootScope.isLogin = true;
+    }
+    console.log($rootScope);
+  })
+  .error(function(err) {
+    alert("错误:" + err);
+  })
 
   $scope.logout = function() {
     $http.get('/user/logout')
-         .success(function(data) {
-           if (data.result == "success") {
-             $scope.isAdmin = $rootScope.isAdmin = false;
-             $scope.username = $rootScope.username = null;
-             $scope.isLogin = $rootScope.isLogin = false;
-             $window.location.href = "/#/problem/list";
-           } else {
-             alert("失败:" + data.toString());
-           }
-         })
-         .error(function(err) {
-           alert("错误" + err);
-         })
+    .success(function(data) {
+      if (data.result == "success") {
+        $scope.isAdmin = $rootScope.isAdmin = false;
+        $scope.username = $rootScope.username = null;
+        $scope.isLogin = $rootScope.isLogin = false;
+        $window.location.href = "/#/problem/list";
+      } else {
+        alert("失败:" + data.toString());
+      }
+    })
+    .error(function(err) {
+      alert("错误" + err);
+    })
   }
 })
 
@@ -220,13 +220,13 @@ OJControllers.controller('adminproblemCtrl',
 function($scope, $http, $rootScope, $uibModal) {
   $rootScope.getItems = function() {
     $http.get('/admin/problem/list/' + $rootScope.currentPage)
-         .success(function(data) {
-           $scope.problems = data.problems;
-           $rootScope.totalItems = data.problemCount;
-         })
-         .error(function(err) {
-           console.log("错误:" + err);
-         })
+    .success(function(data) {
+      $scope.problems = data.problems;
+      $rootScope.totalItems = data.problemCount;
+    })
+    .error(function(err) {
+      console.log("错误:" + err);
+    })
   }
 
   $scope.open = function(title, problemId) {
@@ -255,12 +255,12 @@ function($scope, $uibModalInstance, $http, title, problemId) {
 
   $scope.ok = function() {
     $http.get('/admin/problem/delete?problemId=' + problemId)
-         .success(function(data) {
-           $uibModalInstance.close();
-         })
-         .error(function(err) {
-           alert("错误:" + err);
-         })
+    .success(function(data) {
+      $uibModalInstance.close();
+    })
+    .error(function(err) {
+      alert("错误:" + err);
+    })
   };
 
   $scope.cancel = function() {
@@ -278,13 +278,13 @@ function($scope, $http, $location, $window) {
     var url = '/admin/problem/data?problemId=' + problemId;
     console.log(url);
     $http.get(url)
-         .success(function(data) {
-           if (data.problem)
-             $scope.problem = data.problem;
-         })
-         .error(function(err) {
-           alert('错误：' + err);
-         })
+    .success(function(data) {
+      if (data.problem)
+      $scope.problem = data.problem;
+    })
+    .error(function(err) {
+      alert('错误：' + err);
+    })
   } else {
     $scope.pageTitle = 'Add Problem';
   }
@@ -296,16 +296,137 @@ function($scope, $http, $location, $window) {
     if (!problemId) {
       //add Problem
       $http.post('/admin/problem/add', { problem: $scope.problem })
-           .success(function(data){
-             $window.location.href = '/#/admin/problem/';
-           })
-           .error(function(err){alert('错误:' + err); })
+      .success(function(data){
+        $window.location.href = '/#/admin/problem/';
+      })
+      .error(function(err){alert('错误:' + err); })
     } else {
       //update Problem
 
       $http.post('/admin/problem/update', { problem: $scope.problem })
-           .success(function(data) {})
-           .error(function(err) { alert('错误' + err); })
+      .success(function(data) {})
+      .error(function(err) { alert('错误' + err); })
     }
   }
 });
+
+OJControllers.controller('adminproblemdataCtrl',
+function($scope, $routeParams, $http, $uibModal, $window, Upload) {
+  $scope.problemId = $routeParams.problemId;
+  $scope.getDataList = function() {
+    $http.get('/admin/problem/data/list?problemId=' + $scope.problemId)
+         .success(function(data) {
+           $scope.files = data.files;
+         })
+         .error(function(err) {
+           alert("错误:" + err);
+         })
+  }
+
+  // upload on file select or drop
+  $scope.upload = function (file) {
+    console.log(file);
+    Upload.upload({
+      url: '/admin/problem/testdata/upload?problemId=' + $scope.problemId,
+      file: file
+    }).then(function (resp) {
+      $scope.getDataList();
+    }, function (resp) {
+      console.log('Error status: ' + resp.status);
+    }, function (evt) {
+      var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
+      console.log('progress: ' + progressPercentage + '% ' + evt.config);
+    });
+  };
+  // for multiple files:
+  $scope.uploadFiles = function (files) {
+    console.log(files);
+    if (files && files.length) {
+      for (var i = 0; i < files.length; i++) {
+        Upload.upload(files[i]);
+      }
+    }
+  }
+
+  $scope.openEdit = function(fileName) {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      templateUrl: 'editDataModal.html',
+      controller: 'editDataModalCtrl',
+      resolve: {
+        problemId: function() {  return $scope.problemId; },
+        fileName: function() { return fileName; }
+      }
+    });
+
+    modalInstance.result.then(function () {
+      $scope.getDataList();
+    });
+  }
+
+  $scope.openDelete = function(fileName) {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      templateUrl: 'deleteDataModal.html',
+      controller: 'deleteDataModalCtrl',
+      resolve: {
+        fileName: function() { return fileName; }
+      }
+    });
+
+    modalInstance.result.then(function() {
+      $http.delete('/admin/problem/testdata?problemId=' + $scope.problemId + "&fileName=" + fileName)
+           .success(function(data) {
+              $scope.getDataList();
+           })
+           .error(function(err) {
+             alert("错误:" + err);
+           })
+    })
+
+  }
+
+  $scope.getDataList();
+
+})
+
+OJControllers.controller('editDataModalCtrl',
+function($uibModalInstance, $http, $scope, problemId, fileName) {
+    $http.get('/admin/problem/testdata?problemId=' + problemId + "&fileName=" +fileName)
+         .success(function(data) {
+           $scope = _.assign($scope, data);
+           $scope.data.problemId = problemId;
+           console.log($scope);
+         })
+         .error(function(err) {
+           alert("错误:" + err);
+         })
+
+
+  $scope.save = function() {
+    $http.post('/admin/problem/testdata', { data: $scope.data })
+         .success(function(data) {
+           $uibModalInstance.close();
+         })
+         .error(function(err) {
+           alert("错误: " + err);
+         });
+  }
+
+  $scope.cancel = function() {
+    $uibModalInstance.dismiss();
+  }
+});
+
+
+OJControllers.controller('deleteDataModalCtrl',
+function($uibModalInstance, $scope, fileName) {
+  $scope.fileName = fileName;
+  $scope.yes = function() {
+    $uibModalInstance.close();
+  }
+
+  $scope.no = function() {
+    $uibModalInstance.dismiss();
+  }
+})

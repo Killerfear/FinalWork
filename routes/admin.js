@@ -3,9 +3,13 @@ var router = express.Router();
 var co = require("co");
 var fs = require("fs");
 var _ = require("underscore");
+var multipart = require('connect-multiparty');
+
+/*
 var multer = require("multer");
-var redis = require("../lib/redis-extend");
 var upload = multer({dest: "uploads/" });
+*/
+var redis = require("../lib/redis-extend");
 var bluebird = require("bluebird");
 var path = require("path");
 var child_process = require("child_process");
@@ -163,13 +167,15 @@ router.get("/problem/delete", function(req, res, next) {
 });
 
 //获取题目数据列表
-router.get("/samplelist", function(req, res, next) {
+router.get("/problem/data/list", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		if (!user.isAdmin) throw { message: "无权限" }
-
 		var problemId = req.query.problemId;
-		var filePath = path.resolve("problem", problemId.toString());
+		if (problemId != parseInt(problemId).toString()) {
+			throw { message: "problemId 参数不对" };
+		}
+
+		var filePath = path.join(__dirname, "../problem", problemId);
+		console.log("filePath:", filePath);
 		var files = yield fs.readdirAsync(filePath);
 
 		if (!_.isArray(files)) throw files;
@@ -182,78 +188,90 @@ router.get("/samplelist", function(req, res, next) {
 
 		dataFile.sort();
 
-		return { page:"admin-data", file: dataFile };
+		for (var i in dataFile) {
+			var name = dataFile[i];
+			filePath = path.join(__dirname, "../problem", problemId, name);
+			var fileStat = yield fs.lstatAsync(filePath);
+
+			var size = fileStat.size;
+			if (size > (1 << 20)) size = (size / (1 << 20)) + " MB";
+			else if (size > (1 << 10)) size = (size / 1024) + " KB";
+			else size = size + " B";
+			dataFile[i] = { fileName: name, fileSize: size };
+		}
+
+		return {
+			files: dataFile
+		}
 	}));
 });
 
 //获取题目数据
-router.get("/sample", function(req, res, next) {
+router.get("/problem/testdata", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		if (!user.isAdmin) throw { message: "无权限" };
-
 		var problemId = req.query.problemId;
 		var fileName = req.query.fileName;
 
-		var filePath = path.resolve("problem", problemId, fileName);
+		var filePath = path.join(__dirname, "../problem", problemId, fileName);
 
 		if (!fs.existsSync(filePath)) throw { message: filePath + " 不存在" }
 
 		var text = yield fs.readFileAsync(filePath, "utf8");
 
 		return {
-			page: "admin-edit-data",
-			fileName: fileName,
-			text: text,
-			problemId: problemId
+			data: {
+				fileName: fileName,
+				text: text,
+				problemId: problemId
+			}
 		};
 	}));
 
 });
 
 //添加题目测试数据
-router.post("/sample/add", upload.single("file"), function(req, res, next) {
+router.post("/problem/testdata/upload", multipart(), function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var file = req.file;
-		console.log(file);
-		if (!file) throw { message: "参数缺失" }
+		var files = req.files.file;
+		console.log(files);
+		if (!files || files.length == 0) throw { message: "参数缺失" }
+		console.log("OK");
 
-		var user = req.user;
-		console.log(user);
-		if (!user.isAdmin) throw { message: "无权限" }
+		var basePath = path.join(__dirname, "../problem", req.query.problemId);
+		console.log(basePath);
+		for (var i in files) {
+			var file = files[i];
+			var filePath = path.join(basePath, file.originalFilename);
+			console.log(filePath);
+			var data = yield fs.readFileAsync(file.path);
+			yield [ fs.writeFile(filePath, data), fs.unlink(file.path) ];
+		}
 
-		var path = './problem/' + req.query.problemId + '/' + file.originalname;
-		console.log(path);
-
-		yield fs.renameAsync(file.path, path);
-
-		return { json: {} }
+		return {};
 	}));
 });
 
 //修改题目测试数据
-router.post("/sample/update", function(req, res, next) {
+router.post("/problem/testdata", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
+		console.log(req.body);
+		var problemId = req.body.data.problemId;
+		var fileName = req.body.data.fileName;
+		var data = req.body.data.text;
 
-		if (!user.isAdmin) throw { message: "无权限" }
+		console.log("zzz");
+		if (parseInt(problemId).toString() != problemId) throw { message: "problemId 参数错误" };
+		if (!fileName.match(/^[^/]*.(in|out)$/)) throw { message: "fileName 参数错误" }
 
-		var problemId = req.body.problemId;
-		var fileName = req.body.fileName;
-		var data = req.body.data;
+		var filePath = path.join(__dirname, "../problem", problemId, fileName);
+		console.log(filePath);
 
-		var filePath = path.resolve("problem", problemId, fileName);
+		console.log("yyy");
+		if (!fs.existsSync(filePath))  throw { message: "文件不存在" }
 
-		var err;
-		if (fs.existsSync(filePath)) {
-			yield fs.writeFileAsync(filePath, data, "utf-8");
-		} else {
-			err = { message: "文件不存在" };
-		}
+		yield fs.writeFileAsync(filePath, data, "utf-8");
 
-		if (err) throw err;
-
-		res.redirect("back");
+		return {};
 	}));
 });
 
@@ -262,21 +280,19 @@ router.post("/sample/update", function(req, res, next) {
 
 
 //删除题目测试数据
-router.get("/sample/delete", function(req, res, next) {
+router.delete("/problem/testdata", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-
-		if (!user.isAdmin) throw { message: "无权限" }
 
 		var problemId = req.query.problemId;
 		var fileName = req.query.fileName;
 
-		var filePath = path.resolve("problem", problemId, fileName);
-		var err = fs.unlinkSync(filePath);
+		if (parseInt(problemId).toString() != problemId) throw { message: "problemId 参数错误" };
+		if (!fileName.match(/^[^/]*.(in|out)$/)) throw { message: "fileName 参数错误" }
 
-		if (err) throw { message: "删除文件失败", err: err };
+		var filePath = path.join(__dirname, "../problem", problemId, fileName);
+		yield fs.unlinkAsync(filePath);
 
-		res.redirect('/admin/samplelist?problemId=' + problemId);
+		return {};
 	}));
 });
 

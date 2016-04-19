@@ -22,7 +22,7 @@
           <a class='glyphicon glyphicon-trash' href='javascript:void(0);' ng-click='open(problem.title,problem.problemId)'></a>
         </td>
         <td>
-          <a href='/#/admin/problem/testData/' class='glyphicon glyphicon-file'></a>
+          <a href='/#/admin/problem/data/{{problem.problemId}}' target="_blank" class='glyphicon glyphicon-file'></a>
         </td>
         <td class='col-sm-1'>{{problem.problemId}}</td>
         <td class='col-sm-11'><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>

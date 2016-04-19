@@ -64,6 +64,9 @@ router.get('/code/:solutionId', function(req, res, next) {
 			srcCode = solution.srcCode;
 		}
 
+		return {
+			srcCode: srcCode
+		}
 	}));
 })
 

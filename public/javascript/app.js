@@ -3,6 +3,7 @@
 var OJApp = angular.module('OJApp', [
   "ui.bootstrap",
   'ngRoute',
+  'ngSanitize',
   'OJControllers',
   'OJDirective'
 ]);
@@ -38,6 +39,10 @@ function($routeProvider) {
   when('/admin/problem/edit', {
     templateUrl: '/views/admin-problem-edit',
     controller: 'adminproblemeditCtrl'
+  }).
+  when('/admin/problem/data/:problemId', {
+    templateUrl: '/views/admin-problem-data',
+    controller: 'adminproblemdataCtrl'
   }).
   when('/', {
     redirectTo: '/problem/list/'
