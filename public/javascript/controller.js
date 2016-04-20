@@ -235,32 +235,30 @@ function($scope, $http, $rootScope, $uibModal) {
       templateUrl: 'confirmModal.html',
       controller: 'confirmModalCtrl',
       resolve: {
-        title: function() {  return title; },
-        problemId: function() { return problemId; }
+        title: function() {  return title; }
       }
     });
     console.log("instance");
 
     modalInstance.result.then(function () {
-      _.remove($scope.problems, function(problem) { return problem.problemId == problemId; });
+      $http.get('/admin/problem/delete?problemId=' + problemId)
+          .success(function(data) {
+            _.remove($scope.problems, function(problem) { return problem.problemId == problemId; });
+          })
+          .error(function(err) {
+            alert("错误:" + err);
+          })
     });
 
   }
 })
 
 OJControllers.controller('confirmModalCtrl',
-function($scope, $uibModalInstance, $http, title, problemId) {
+function($scope, $uibModalInstance, $http, title) {
   $scope.title = title;
-  $scope.problemId = problemId;
 
   $scope.ok = function() {
-    $http.get('/admin/problem/delete?problemId=' + problemId)
-    .success(function(data) {
-      $uibModalInstance.close();
-    })
-    .error(function(err) {
-      alert("错误:" + err);
-    })
+    uibModalInstance.close();
   };
 
   $scope.cancel = function() {
@@ -428,5 +426,42 @@ function($uibModalInstance, $scope, fileName) {
 
   $scope.no = function() {
     $uibModalInstance.dismiss();
+  }
+})
+
+OJControllers.controller('admincontestCtrl',
+function($scope, $http, $rootScope, $uibModal) {
+  $rootScope.getItems = function() {
+    $http.get('/admin/contest/list/' + $rootScope.currentPage)
+    .success(function(data) {
+      $scope.contests = data.contests;
+      $rootScope.totalItems = data.contestCount;
+    })
+    .error(function(err) {
+      console.log("错误:" + err);
+    })
+  }
+
+  $scope.open = function(title, contestId) {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      templateUrl: 'confirmModal.html',
+      controller: 'confirmModalCtrl',
+      resolve: {
+        title: function() {  return title; },
+      }
+    });
+    console.log("instance");
+
+    modalInstance.result.then(function () {
+      $http.get('/admin/contest/delete?contestId=' + contestId)
+           .success(function(data) {
+              _.remove($scope.contests, function(contest) { return contest.contestId == contestId; });
+           })
+           .error(function(err) {
+             alert("错误: " + err);
+           })
+    });
+
   }
 })

@@ -299,14 +299,22 @@ router.delete("/problem/testdata", function(req, res, next) {
 
 /*******************************比赛相关*********************************/
 
-//获取比赛数据
-router.get('/contest/list', function(req, res, next) {
+//获取比赛列表
+router.get('/contest/list/:page', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var contests = yield mongo.find("Contest", {});
-		return {
-			json: {
-				contests: contests
-			}
+		var page = parseInt(req.params.page);
+		var limit = 50;
+		var skip = (page - 1) * limit;
+		var contests = yield DB.Contest.find()
+													 .skip(skip)
+													 .limit(limit)
+													 .sort("-contestId")
+
+	  var contestCount = yield redis.getAsync('contestCount');
+
+    return {
+			contests: contests,
+			contestCount: contestCount
 		}
 	}));
 });
@@ -315,44 +323,31 @@ router.get('/contest/list', function(req, res, next) {
 router.post('/contest/edit', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 
-		var param = req.body;
-		var contest = _.pick(param, 'title', 'problemId', 'isPrivate', 'startTime', 'endTime', 'isHidden', 'authorizee');
+		var contest = new DB.Contest(req.body.contest);
 
-		yield mongo.insert('Contest', contest);
+		yield contest.save();
 
-		return { title: req.baseUrl + req.path };
+		return {};
 	}));
 });
 
 //编辑比赛
 router.post('/contest/edit/update',function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		if (!user.isAdmin) throw { message: "无权限" }
-
-		var param = req.body;
-		var contestId = ObjectID(param.contestId);
-
-		var setter = _.pick(param, 'title', 'problemId', 'isPrivate', 'startTime', 'endTime', 'isHidden', 'authorizee');
-
-		var doc = yield mongo.findOneAndUpdate('Contest', { _id: contestId }, { $set: setter , returnOriginal : false });
-
-		return { title :  doc };
+		var contest = req.body.contest;
+		var doc = yield DB.Contest.findOneAndUpdate({ contestId: contest.contestId }, contest);
+		return {};
 	}));
 });
 
 //删除比赛
-router.get('/contest/edit/delete', function(req, res, next) {
+router.get('/contest/delete', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		if (!user.isAdmin) throw { message: "无权限" }
+		var contestId = parseInt(req.query.contestId);
 
-		var param = req.query;
-		var contestId = ObjectID(param.contestId);
+		yield DB.Contest.findOneAndRemove({ contestId: contestId });
 
-		var result = yield mongo.findOneAndDelete("Contest", { _id: contestId });
-
-		return { title : result }
+		return {};
 	}));
 });
 
