@@ -15,7 +15,7 @@
 						<div class="col-sm-2">
 							<label class="control-label">Title</label>
 						</div>
-						<div class="col-sm-6">
+						<div class="col-sm-4">
 							<input type="text" class="form-control" ng-model='contest.title' placeholder="Title" autofocus required>
 						</div>
 					</div>
@@ -44,10 +44,10 @@
 						<div class='col-sm-2'>
 							<label class='control-label'>Duration</label>
 						</div>
-						<div class="col-sm-8">
-								<label class='control-label'><input type='text' class="form-control" ng-model='duration.day'> Days</label>
-								<label class='control-label'><input type='text' class="form-control" ng-model='duration.hour'>:</label>
-								<label class='control-label'><input type='text' class="form-control" ng-model='duration.minute'>:00</label>
+						<div class="col-sm-10">
+								<label class='control-label'><input type='text' class="form-control" ng-model='duration.day'>Days</label>
+								<label class='control-label'><input type='text' class="form-control" ng-model='duration.hour'>Hours</label>
+								<label class='control-label'><input type='text' class="form-control" ng-model='duration.minute'>Minutes</label>
 						</div>
 					</div>
 					<div class="form-group">
@@ -74,6 +74,43 @@
 								<option value="0">visible</option>
 								<option value="1">invisible</option>
 							</select>
+						</div>
+					</div>
+					<div class='form-group' ng-show="contest.isPrivate">
+						<div class='col-sm-2'>
+							<label class='control-label'>Users</label>
+						</div>
+						<div class='col-sm-6'>
+							<input type='text' class='form-control' ng-model="contest.authorizee" placeholder="Username seperated by space or ','">
+						</div>
+					</div>
+					<div class='form-group'>
+						<div class='col-sm-2'>
+							<label class='control-label'>
+								Problems
+							</label>
+						</div>
+						<div class='col-sm-6'>
+							<table>
+								<thead>
+									<th></th>
+									<th></th>
+									<th></th>
+									<th></th>
+								</thead>
+								<tbody>
+									<tr ng-repeat="problem in problems">
+										<td><a href="javascript:void(0);" class="glyphicon glyphicon-remove" ng-click="remove($index)">&nbsp;</a>
+										<td><input type='text' class='form-control' placeholder="problemId" ng-model="problem.id" ng-init="getTitle(problem.id, $index)" ng-change="getTitle(problem.id, $index)"></td>
+										<td ng-class="{'text-danger': !problem.isFound}">&nbsp;&nbsp;{{getChar($index - 0 + 65)}}</td>
+										<td ng-class="{'text-danger': !problem.isFound}">&nbsp;-&nbsp;&nbsp;{{problem.title}}</td>
+									</tr>
+								</tbody>
+							</table>
+							<div style="margin-left:80px" ng-show="problems.length < 26">
+								<a style="margin-top:10px;"class='glyphicon glyphicon-plus' href="javascript:void(0);" ng-click="add()"></a>
+							</div>
+
 						</div>
 					</div>
 					<div class="form-group">

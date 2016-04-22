@@ -467,16 +467,112 @@ function($scope, $http, $rootScope, $uibModal) {
 })
 
 OJControllers.controller('admincontesteditCtrl',
-function($scope, $http, $rootScope) {
+function($scope, $http, $location ) {
+
+
   $scope.visibles = [{ text: 'Visible', value: false }, { text: 'Invisible', value: true } ];
   $scope.auths = [{ text: 'Public', value: false }, { text: 'Private', value: true } ];
-  var contest = $scope.contest = {};
-  contest.isPrivate = contest.isHidden = false;
+  $scope.contest = {};
+  $scope.contest.isPrivate = $scope.contest.isHidden = false;
   $scope.pageTitle = "";
   $scope.duration = {};
   $scope.duration.day = $scope.duration.minute = 0;
   $scope.duration.hour = 5;
+  $scope.contest.startTime = (new Date()).getTime();
+  $scope.contest.startTime -= $scope.contest.startTime % (60 * 1000) - 2 * 60 * 1000;
 
-    
+  $scope.problems = [];
 
+  var param = $location.search();
+  var contestId = $location.contestId;
+
+  if (contestId) {
+    $scope.contest.contestId = contestId;
+    $http.get('/admin/contest/data?contestId=' + contestId)
+         .success(function(data) {
+           var contest = data.contest;
+           if (contest) {
+             $scope.pageTitle = "Edit Contest";
+             $scope.contest = data.contest;
+             var length = data.contest.endTime - data.contest.startTime;
+             $scope.duration.day = length / (24 * 60 * 60 * 1000);
+             length %= (24 * 60 * 60 * 1000);
+             $scope.duration.hour = length / (60 * 60 * 1000);
+             length %= (60 * 60 * 1000);
+             $scope.duration.minute = length / (60 * 1000);
+             for (var i in data.contest.problemId) {
+               $scope.problems.push({ id: data.contest.problemId[i] })
+             }
+           }
+         })
+  }
+
+  if (!$scope.pageTitle) {
+    $scope.pageTitle = "Add Contest";
+  }
+
+  $scope.getChar = function(x) {
+    return String.fromCharCode(x);
+  }
+
+  $scope.getTitle = function(problemId, idx) {
+    if (!problemId) return;
+    $http.get("/problem/data/" + problemId)
+         .success(function(data) {
+           var problem = data.problem;
+           if (problem) {
+             $scope.problems[idx].title = problem.title;
+             $scope.problems[idx].isFound = true;
+           }
+         })
+         .error(function(err) {
+             $scope.problems[idx].title = "No Such Problem";
+
+         })
+  }
+
+  $scope.add = function() {
+    var lastProblem = _.last($scope.problems);
+    var newProblem = {};
+
+    if (lastProblem && lastProblem.id) {
+      newProblem.id = parseInt(lastProblem.id) + 1;
+    }
+
+    $scope.problems.push(newProblem);
+  }
+  $scope.remove = function(idx) {
+    $scope.problems.splice(idx, 1);
+  }
+
+  function getDuration() {
+    return ((duration.day * 24 + duration.hour) * 60 + duration.minute) * 60 * 1000;
+  }
+
+  $scope.submit = function() {
+    $scope.contest.endTime = $scope.contest.startTime + getDuration();
+    $scope.contest.problemId = [];
+    for (var i in $scope.problems) {
+      $scope.contest.problemId.push($scope.problems[i].id);
+    }
+    $scope.contest.authorizee = $scope.authorizee.split(/\s+|,/);
+
+    if ($scope.pageTitle == "Add Contest")  {
+      $http.put('/admin/contest', { contest: $scope.contest })
+           .success(function(data) {
+              alert("添加成功");
+           })
+           .error(function(err) {
+             alert("错误: " + err);
+           });
+    } else {
+      $http.post('/admin/contest/data', { contest: $scope.contest })
+           .success(function(data) {
+             alert("修改成功");
+           })
+           .error(function(err) {
+             alert("错误: " + err);
+           })
+    }
+  }
 });

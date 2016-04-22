@@ -325,31 +325,54 @@ router.get('/contest/list/:page', function(req, res, next) {
 });
 
 //创建比赛
-router.post('/contest/edit', function(req, res, next) {
+router.put('/contest', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 
 		var contest = new DB.Contest(req.body.contest);
 
-		yield contest.save();
+		if (contest.startTime > contest.endTime) throw { message: "开始时间比结束时间晚" };
+		if (contest.startTime < 0) throw { message : "开始时间范围不对" };
 
+		var problemIds = contest.problemId;
+		if (problemIds.length > 26) throw { message: "题目数量超过限制" };
+
+		for (var i in problemIds) {
+			var problemId = problemIds[i];
+			var exist = yield DB.Problem.count({ problemId: problemId });
+			if (!exist) throw { message: "题目 " + problemId + " 不存在" }
+		}
+
+		yield contest.save();
 		return {};
 	}));
 });
 
-//编辑比赛
-router.post('/contest/edit/update',function(req, res, next) {
+//修改比赛
+router.post('/contest/data',function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var contest = req.body.contest;
 		var doc = yield DB.Contest.findOneAndUpdate({ contestId: contest.contestId }, contest);
+		if (!doc) throw { message: "比赛不存在" };
 		return {};
 	}));
 });
+
+//获取比赛数据
+router.get('/contest/data', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var contest = yield DB.Contest.findOne({ contestId: parseInt(req.query.contestId) });
+		if (!contest) throw { message: "比赛不存在" };
+		return {
+			contest: contest;
+		}
+	}))
+})
 
 //删除比赛
 router.get('/contest/delete', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var contestId = parseInt(req.query.contestId);
-
+		
 		yield DB.Contest.findOneAndRemove({ contestId: contestId });
 
 		return {};
