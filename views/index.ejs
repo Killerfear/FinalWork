@@ -8,23 +8,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
-  <link href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" rel="stylesheet">
-  <link href="http://cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
-  <link href="http://cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="/bootstrap/dist/css/bootstrap-theme.min.css" rel="stylesheet">
+  <link href="/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+  <link href="/angular-bootstrap-datetimepicker/src/css/datetimepicker.css" rel="stylesheet">
 
-  <script src="http://cdn.bootcss.com/jquery/2.2.1/jquery.js"></script>
-  <script src="http://cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  <script src='/jquery/dist/jquery.min.js'></script>
+  <script src="/bootstrap/dist/js/bootstrap.min.js"></script>
   <script src="/angular/angular.min.js"></script>
-  <script src="http://cdn.bootcss.com/angular-sanitize/1.5.0/angular-sanitize.min.js"></script>
+  <script src="/angular-sanitize/angular-sanitize.min.js"></script>
   <script src="/angular-route/angular-route.min.js"></script>
-  <!-- <script src="http://cdn.bootcss.com/angular.js/1.5.0/angular.min.js"></script> -->
-  <!-- <script src="http://cdn.bootcss.com/angular.js/1.5.0/angular-route.min.js"></script> -->
-  <script src="http://cdn.bootcss.com/angular-ui-bootstrap/1.2.1/ui-bootstrap.min.js"></script>
-  <script src="http://cdn.bootcss.com/angular-ui-bootstrap/1.2.1/ui-bootstrap-tpls.min.js"></script>
-  <script src="http://cdn.bootcss.com/lodash.js/4.6.1/lodash.min.js"></script>
-  <script src="http://cdn.bootcss.com/URI.js/1.17.1/URI.min.js"></script>
-<script src="http://cdn.bootcss.com/danialfarid-angular-file-upload/12.0.1/ng-file-upload.min.js"></script>
-<script src="http://cdn.bootcss.com/danialfarid-angular-file-upload/12.0.1/ng-file-upload-shim.min.js"></script>
+  <script src="/angular-bootstrap/ui-bootstrap.min.js"></script>
+  <script src="/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+  <script src="/lodash/dist/lodash.min.js"></script>
+  <script src="/urijs/src/URI.min.js"></script>
+  <script src="/ng-file-upload/ng-file-upload.min.js"></script>
+  <script src="/ng-file-upload/ng-file-upload-shim.min.js"></script>
   <script src="bower_components/angular-load/angular-load.js"></script>
   <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
@@ -34,25 +33,24 @@
       }
     });
   </script>
-  <script type="text/javascript" async
-    src="http://cdn.bootcss.com/mathjax/2.6.1/MathJax.js?config=TeX-AMS_CHTML">
+  <script type="text/javascript" async src="http://cdn.bootcss.com/mathjax/2.6.1/MathJax.js?config=TeX-AMS_CHTML">
   </script>
 
 
   <script src='/javascript/app.js'></script>
   <script src='/javascript/controller.js'></script>
   <script src='/javascript/directive.js'></script>
+  <script src="/moment/min/moment.min.js"></script>
+  <script src="/angular-bootstrap-datetimepicker/src/js/datetimepicker.js"></script>
+  <script src="/angular-bootstrap-datetimepicker/src/js/datetimepicker.templates.js"></script>
 
   <style>
-    body {
-      padding: 90px;
-    }
+  body {
+    padding: 90px;
+  }
   </style>
 </head>
 <body>
-
-  <div class='container'>
-    <div ng-view></div>
-  </div>
+  <div ng-view></div>
 </body>
 </html>

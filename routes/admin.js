@@ -100,11 +100,17 @@ router.post("/problem/add", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var problem = req.body.problem;
 
+		problem = new DB.Problem(problem);
+		problem = yield problem.save();
+		var problemCount = yield DB.Problem.count();
+		console.log(problem);
+
 		var sampleInput = problem.sampleInput;
 		var sampleOutput = problem.sampleOutput;
 
-		var id = yield redis.incrAsync("problemCount");
-		console.log(id);
+		yield redis.setAsync("problemCount", problemCount);
+
+		var id = problem.problemId;
 
 		var filePath = path.join(__dirname, "../problem/", id.toString());
 
@@ -112,8 +118,7 @@ router.post("/problem/add", function(req, res, next) {
 
 		yield [
 			fs.writeFileAsync(filePath + "/sample.in", sampleInput, "utf-8"),
-			fs.writeFileAsync(filePath + "/sample.out", sampleOutput, "utf-8"),
-			(new DB.Problem(problem)).save()
+			fs.writeFileAsync(filePath + "/sample.out", sampleOutput, "utf-8")
 		]
 
 		return {};

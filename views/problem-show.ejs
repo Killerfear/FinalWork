@@ -2,8 +2,9 @@
 
 <div class='container'>
 	<h1 class='text-center'>{{problem.title}}</h1>
-	<h4 class='text-center'>Time Limit:{{problem.timeLimit}}MS Memory Limit: {{problem.memLimit}}MB</h4>
-	<div class='container'>
+	<h4 class='text-center'>Time Limit:{{problem.timeLimit * 1000}} MS Memory Limit: {{problem.memLimit}} MB</h4>
+	<br />
+	<div class='container text-center'>
 		<button type='button' class='btn btn-default' ng-click='open()'>Submit</button>
 		<button type='button' class='btn btn-default' ng-click='goToStatusList()'>Status</button>
 	</div>
@@ -20,7 +21,7 @@
 	<pre>{{problem.sampleInput}}</pre>
 
 	<h2>Sample Output</h2>
-	<pre>{{problem.sampleInput}}</pre>
+	<pre>{{problem.sampleOutput}}</pre>
 
 </div>
 

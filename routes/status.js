@@ -29,9 +29,10 @@ router.get('/search/:page', function(req, res, next) {
 		var skip = (parseInt(req.params.page) - 1) * 50;
 		var limit = 50;
 
-		var promises = yield [ DB.Solution.find(query) .select("-_id solutionId problemId username result memory time submitTime srcCode")
-																		  .sort("-solutionId").skip(skip).limit(limit).exec(),
-													 redis.getAsync('solutionCount')
+		var promises = yield [ DB.Solution.find(query)
+																			.select("-_id solutionId problemId username result memory time submitTime srcCode")
+																		  .sort("-solutionId").skip(skip).limit(limit),
+													 DB.Solution.count(query)
 												 ]
 
 		var solutions = promises[0];

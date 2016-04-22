@@ -465,3 +465,18 @@ function($scope, $http, $rootScope, $uibModal) {
 
   }
 })
+
+OJControllers.controller('admincontesteditCtrl',
+function($scope, $http, $rootScope) {
+  $scope.visibles = [{ text: 'Visible', value: false }, { text: 'Invisible', value: true } ];
+  $scope.auths = [{ text: 'Public', value: false }, { text: 'Private', value: true } ];
+  var contest = $scope.contest = {};
+  contest.isPrivate = contest.isHidden = false;
+  $scope.pageTitle = "";
+  $scope.duration = {};
+  $scope.duration.day = $scope.duration.minute = 0;
+  $scope.duration.hour = 5;
+
+    
+
+});

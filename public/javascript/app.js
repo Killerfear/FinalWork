@@ -5,7 +5,8 @@ var OJApp = angular.module('OJApp', [
   'ngRoute',
   'ngSanitize',
   'OJControllers',
-  'OJDirective'
+  'OJDirective',
+  'ui.bootstrap.datetimepicker'
 ]);
 
 
@@ -39,6 +40,10 @@ function($routeProvider) {
   when('/admin/problem/edit', {
     templateUrl: '/views/admin-problem-edit',
     controller: 'adminproblemeditCtrl'
+  }).
+  when('/admin/contest/edit', {
+    templateUrl: '/views/admin-contest-edit',
+    controller: 'admincontesteditCtrl'
   }).
   when('/admin/problem/data/:problemId', {
     templateUrl: '/views/admin-problem-data',
