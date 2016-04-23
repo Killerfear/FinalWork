@@ -11,21 +11,26 @@ var DB = require('../lib/mongoose-schema');
 const limit = 50;
 
 //获取比赛列表
-router.get('/list',  function(req, res, next) {
+router.get('/list/:page',  function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
+		var skip = (req.params.page - 1) * limit;
 
-		var skip = (req.query.page - 1) * limit;
+		var promises = yield [
+														DB.Contest.find({ isHidden: false })
+																			.select("contestId title isPrivate startTime endTime")
+																			.sort("-startTime")
+																			.skip(skip)
+																			.limit(limit),
+														DB.Contest.count({ isHidden: false })
+													];
 
-		var contests = yield
-			DB.Contest.find({ isHidden: false })
-								.select("title isPrivate startTime endTime")
-								.sort("-contestId")
-								.skip(skip)
-								.limit(limit)
-								.exec();
+		var contests = promises[0];
+		var contestCount = promises[1];
 
-		return { title: contests };
+		return {
+			contests: contests,
+			contestCount: contestCount
+		}
 	}));
 });
 

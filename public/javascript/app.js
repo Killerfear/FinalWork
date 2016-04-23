@@ -21,6 +21,10 @@ function($routeProvider) {
     templateUrl: '/views/problem-show',
     controller: 'problemshowCtrl'
   }).
+  when('/contest/list', {
+      templateUrl: '/views/contest-list',
+      controller: 'contestlstCtrl'
+  }).
   when('/user/login', {
     templateUrl: '/views/user-login',
     controller: 'userloginCtrl'
