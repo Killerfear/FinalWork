@@ -258,7 +258,7 @@ function($scope, $uibModalInstance, $http, title) {
   $scope.title = title;
 
   $scope.ok = function() {
-    uibModalInstance.close();
+    $uibModalInstance.close();
   };
 
   $scope.cancel = function() {
@@ -467,13 +467,14 @@ function($scope, $http, $rootScope, $uibModal) {
 })
 
 OJControllers.controller('admincontesteditCtrl',
-function($scope, $http, $location ) {
+function($scope, $http, $location, $window) {
 
 
   $scope.visibles = [{ text: 'Visible', value: false }, { text: 'Invisible', value: true } ];
   $scope.auths = [{ text: 'Public', value: false }, { text: 'Private', value: true } ];
   $scope.contest = {};
   $scope.contest.isPrivate = $scope.contest.isHidden = false;
+  $scope.authorizee = "";
   $scope.pageTitle = "";
   $scope.duration = {};
   $scope.duration.day = $scope.duration.minute = 0;
@@ -484,7 +485,9 @@ function($scope, $http, $location ) {
   $scope.problems = [];
 
   var param = $location.search();
-  var contestId = $location.contestId;
+  console.log(param);
+  var contestId = param.contestId;
+  console.log(contestId);
 
   if (contestId) {
     $scope.contest.contestId = contestId;
@@ -495,11 +498,11 @@ function($scope, $http, $location ) {
              $scope.pageTitle = "Edit Contest";
              $scope.contest = data.contest;
              var length = data.contest.endTime - data.contest.startTime;
-             $scope.duration.day = length / (24 * 60 * 60 * 1000);
+             $scope.duration.day = parseInt(length / (24 * 60 * 60 * 1000));
              length %= (24 * 60 * 60 * 1000);
-             $scope.duration.hour = length / (60 * 60 * 1000);
+             $scope.duration.hour = parseInt(length / (60 * 60 * 1000));
              length %= (60 * 60 * 1000);
-             $scope.duration.minute = length / (60 * 1000);
+             $scope.duration.minute = parseInt(length / (60 * 1000));
              for (var i in data.contest.problemId) {
                $scope.problems.push({ id: data.contest.problemId[i] })
              }
@@ -541,12 +544,13 @@ function($scope, $http, $location ) {
 
     $scope.problems.push(newProblem);
   }
+
   $scope.remove = function(idx) {
     $scope.problems.splice(idx, 1);
   }
 
   function getDuration() {
-    return ((duration.day * 24 + duration.hour) * 60 + duration.minute) * 60 * 1000;
+    return (($scope.duration.day * 24 + $scope.duration.hour) * 60 + $scope.duration.minute) * 60 * 1000;
   }
 
   $scope.submit = function() {
@@ -555,12 +559,14 @@ function($scope, $http, $location ) {
     for (var i in $scope.problems) {
       $scope.contest.problemId.push($scope.problems[i].id);
     }
+    console.log($scope.authorizee);
     $scope.contest.authorizee = $scope.authorizee.split(/\s+|,/);
 
     if ($scope.pageTitle == "Add Contest")  {
       $http.put('/admin/contest', { contest: $scope.contest })
            .success(function(data) {
               alert("添加成功");
+              $window.location.href = "/#/admin/contest";
            })
            .error(function(err) {
              alert("错误: " + err);
@@ -569,6 +575,7 @@ function($scope, $http, $location ) {
       $http.post('/admin/contest/data', { contest: $scope.contest })
            .success(function(data) {
              alert("修改成功");
+             $window.location.href = "/#/admin/contest";
            })
            .error(function(err) {
              alert("错误: " + err);

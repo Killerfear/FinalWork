@@ -81,7 +81,7 @@ ContestSchema.index { contestId: "hashed" }
 
 ProblemSchema.plugin autoIncrement.plugin, { model: "Problem", field: "problemId", startAt: 1000 }
 SolutionSchema.plugin autoIncrement.plugin, { model: "Solution", field: "solutionId" }
-ContestSchema.plugin autoIncrement.plugin, "Contest", { model: "Contest", field : "contestId" }
+ContestSchema.plugin autoIncrement.plugin,  { model: "Contest", field : "contestId" }
 
 exports.User = db.model "User", UserSchema
 exports.Problem = db.model "Problem", ProblemSchema

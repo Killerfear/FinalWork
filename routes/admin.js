@@ -360,10 +360,11 @@ router.post('/contest/data',function(req, res, next) {
 //获取比赛数据
 router.get('/contest/data', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var contest = yield DB.Contest.findOne({ contestId: parseInt(req.query.contestId) });
+		var contest = yield DB.Contest.findOne({ contestId: parseInt(req.query.contestId) })
+																	.select("-_id");
 		if (!contest) throw { message: "比赛不存在" };
 		return {
-			contest: contest;
+			contest: contest
 		}
 	}))
 })
@@ -372,7 +373,7 @@ router.get('/contest/data', function(req, res, next) {
 router.get('/contest/delete', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var contestId = parseInt(req.query.contestId);
-		
+
 		yield DB.Contest.findOneAndRemove({ contestId: contestId });
 
 		return {};
