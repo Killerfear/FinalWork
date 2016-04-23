@@ -25,6 +25,10 @@ function($routeProvider) {
       templateUrl: '/views/contest-list',
       controller: 'contestlstCtrl'
   }).
+  when('/contest/show/:contestId', {
+    templateUrl: '/views/contest-show',
+    controller: 'contestshowCtrl'
+  }).
   when('/user/login', {
     templateUrl: '/views/user-login',
     controller: 'userloginCtrl'

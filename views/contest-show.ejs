@@ -1,0 +1,63 @@
+<div ng-include="'/views/navbar.ejs'"> </div>
+
+<div class='container'>
+  <div class='col-md-12'>
+    <h1 class='text-center'>{{contest.title}}</h1>
+  <br />
+  </div>
+  <div class='col-md-12'>
+    <div class="active progress progress-striped">
+      <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{(currentTime - contest.startTime) / (contest.endTime - contest.startTime) * 100}}%;">
+        {{getDuration(currentTime - contest.startTime)}}
+      </div>
+    </div>
+  </div>
+  <br />
+
+  <div class='col-md-12'>
+    <uib-tabset active="activeTab">
+      <uib-tab heading='Overview'>
+        <br />
+        <div class='col-sm-12'>
+          <label>Current Time:</label> {{currentTime | date: 'yyyy-MM-dd HH:mm:ss'}}
+        </div>
+        <div class='col-sm-12'>
+          <label>Start Time:</label> {{contest.startTime | date: 'yyyy-MM-dd HH:mm:ss'}}
+        </div>
+        <div class='col-sm-12'>
+          <label>End Time:</label> {{contest.endTime | date: 'yyyy-MM-dd HH:mm:ss'}}
+        </div>
+        <div class='col-sm-12'>
+          <label>Status:</label>
+          <span class='text-success' ng-show='contest.status == 0'>Pending</span>
+          <span class='text-danger' ng-show='contest.status == 1'>Running</span>
+          <span class='text-muted' ng-show='contest.status == 2'>Finished</span>
+        </div>
+        <table class='table' ng-show="contest.isStart">
+          <thead>
+            <th></th>
+            <th></th>
+            <th>Title</th>
+            <th></th>
+          </thead>
+          <tbody>
+            <tr ng-repeat='problem in contest.problems'>
+              <th class='text-right' style="color: #AA0000 ;" ng-show=" $index % 3 == 0 || problem.status == 2"><i class="glyphicon glyphicon-remove"></i></th>
+              <th class='text-right' style="color: green;" ng-show="$index % 3 == 1 || problem.status == 1"><i class="glyphicon glyphicon-ok"></i></th>
+              <th class='text-right' ng-show='$index % 3 == 2'></th>
+              <th >{{problem.charId}}</th>
+              <th><a href="javascript:void(0);" ng-click="activeTab=1;activeProblem=problem">{{problem.title}}</th>
+              <th ng-show='problem.submited'>{{problem.solved}}/{{problem.submited}}</th>
+            </tr>
+          </tbody>
+        </table>
+      </uib-tab>
+      <uib-tab heading='Problems' ng-show="contest.isStart">
+      </uib-tab>
+      <uib-tab heading='Status' ng-show="contest.isStart">
+      </uib-tab>
+      <uib-tab heading='Rank' ng-show="contest.isStart">
+      </uib-tab>
+    </uib-tabset>
+  </div>
+</div>

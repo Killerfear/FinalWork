@@ -1,3 +1,44 @@
+function sprintf() {
+  var i = 0, a, f = arguments[i++], o = [], m, p, c, x, s = '';
+  while (f) {
+    if (m = /^[^\x25]+/.exec(f)) {
+      o.push(m[0]);
+    }
+    else if (m = /^\x25{2}/.exec(f)) {
+      o.push('%');
+    }
+    else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f)) {
+      if (((a = arguments[m[1] || i++]) == null) || (a == undefined)) {
+        throw('Too few arguments.');
+      }
+      if (/[^s]/.test(m[7]) && (typeof(a) != 'number')) {
+        throw('Expecting number but found ' + typeof(a));
+      }
+      switch (m[7]) {
+        case 'b': a = a.toString(2); break;
+        case 'c': a = String.fromCharCode(a); break;
+        case 'd': a = parseInt(a); break;
+        case 'e': a = m[6] ? a.toExponential(m[6]) : a.toExponential(); break;
+        case 'f': a = m[6] ? parseFloat(a).toFixed(m[6]) : parseFloat(a); break;
+        case 'o': a = a.toString(8); break;
+        case 's': a = ((a = String(a)) && m[6] ? a.substring(0, m[6]) : a); break;
+        case 'u': a = Math.abs(a); break;
+        case 'x': a = a.toString(16); break;
+        case 'X': a = a.toString(16).toUpperCase(); break;
+      }
+      a = (/[def]/.test(m[7]) && m[2] && a >= 0 ? '+'+ a : a);
+      c = m[3] ? m[3] == '0' ? '0' : m[3].charAt(1) : ' ';
+      x = m[5] - String(a).length - s.length;
+      p = m[5] ? _.repeat(c, x) : '';
+      o.push(s + (m[4] ? a + p : p + a));
+    }
+    else {
+      throw('Huh ?!');
+    }
+    f = f.substring(m[0].length);
+  }
+  return o.join('');
+}
 
 var OJControllers = angular.module('OJControllers', ['ngFileUpload']);
 
@@ -531,7 +572,7 @@ function($scope, $http, $location, $window) {
          })
          .error(function(err) {
              $scope.problems[idx].title = "No Such Problem";
-
+             $scope.problems[idx].isFound = false;
          })
   }
 
@@ -555,7 +596,7 @@ function($scope, $http, $location, $window) {
   }
 
   $scope.submit = function() {
-    if (typeof $scope.contest.startTime) {
+    if (_.isDate($scope.contest.startTime)) {
       $scope.contest.startTime = $scope.contest.startTime.getTime();
     }
     $scope.contest.endTime = $scope.contest.startTime + getDuration();
@@ -616,47 +657,6 @@ function($scope, $rootScope, $http) {
     else if (currentTime < endTime) return "Running";
     else return "Finished";
   }
-  function sprintf() {
-    var i = 0, a, f = arguments[i++], o = [], m, p, c, x, s = '';
-    while (f) {
-      if (m = /^[^\x25]+/.exec(f)) {
-        o.push(m[0]);
-      }
-      else if (m = /^\x25{2}/.exec(f)) {
-        o.push('%');
-      }
-      else if (m = /^\x25(?:(\d+)\$)?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-fosuxX])/.exec(f)) {
-        if (((a = arguments[m[1] || i++]) == null) || (a == undefined)) {
-          throw('Too few arguments.');
-        }
-        if (/[^s]/.test(m[7]) && (typeof(a) != 'number')) {
-          throw('Expecting number but found ' + typeof(a));
-        }
-        switch (m[7]) {
-          case 'b': a = a.toString(2); break;
-          case 'c': a = String.fromCharCode(a); break;
-          case 'd': a = parseInt(a); break;
-          case 'e': a = m[6] ? a.toExponential(m[6]) : a.toExponential(); break;
-          case 'f': a = m[6] ? parseFloat(a).toFixed(m[6]) : parseFloat(a); break;
-          case 'o': a = a.toString(8); break;
-          case 's': a = ((a = String(a)) && m[6] ? a.substring(0, m[6]) : a); break;
-          case 'u': a = Math.abs(a); break;
-          case 'x': a = a.toString(16); break;
-          case 'X': a = a.toString(16).toUpperCase(); break;
-        }
-        a = (/[def]/.test(m[7]) && m[2] && a >= 0 ? '+'+ a : a);
-        c = m[3] ? m[3] == '0' ? '0' : m[3].charAt(1) : ' ';
-        x = m[5] - String(a).length - s.length;
-        p = m[5] ? _.repeat(c, x) : '';
-        o.push(s + (m[4] ? a + p : p + a));
-      }
-      else {
-        throw('Huh ?!');
-      }
-      f = f.substring(m[0].length);
-    }
-    return o.join('');
-  }
   $scope.getDuration = function(duration) {
     var days = parseInt(duration / (24 * 60 * 60 * 1000));
     duration %= (24 * 60 * 60 * 1000);
@@ -669,3 +669,47 @@ function($scope, $rootScope, $http) {
     return res;
   }
 })
+
+
+OJControllers.controller('contestshowCtrl',
+function($scope, $http, $routeParams, $interval) {
+  var contestId = $routeParams.contestId;
+  $scope.activeTab = 0;
+  $scope.contest = {};
+  $http.get('/contest/show/' + contestId)
+       .success(function(data) {
+         $scope.contest = data.contest;
+         var problems = $scope.contest.problems;
+         for (var i in problems) {
+           var problem = problems[i];
+           console.log(i);
+           problem.charId = String.fromCharCode(parseInt(i) + 65); //'A' + i
+         }
+         $scope.currentTime = new Date().getTime();
+         if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
+         else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
+         else $scope.contest.status = 2;
+       })
+       .error(function(err) {
+         alert("错误: " + err);
+       })
+
+   $scope.getDuration = function(duration) {
+     var hours = parseInt(duration / (60 * 60 * 1000));
+     duration %= (60 * 60 * 1000);
+     var minute = parseInt(duration / (60 * 1000));
+     duration %= (60 * 1000);
+     var second =  parseInt(duration / 1000);
+     var res = "";
+     res += sprintf("%d:%02d:%02d", hours, minute, second);
+     return res;
+   }
+
+   $interval(function() {
+     $scope.currentTime = new Date().getTime();
+     if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
+     else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
+     else $scope.contest.status = 2;
+   }, 1000);
+
+});
