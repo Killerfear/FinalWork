@@ -333,13 +333,14 @@ router.put('/contest', function(req, res, next) {
 		if (contest.startTime > contest.endTime) throw { message: "开始时间比结束时间晚" };
 		if (contest.startTime < 0) throw { message : "开始时间范围不对" };
 
-		var problemIds = contest.problemId;
+		var problemIds = req.body.contest.problemId;
 		if (problemIds.length > 26) throw { message: "题目数量超过限制" };
 
 		for (var i in problemIds) {
 			var problemId = problemIds[i];
-			var exist = yield DB.Problem.count({ problemId: problemId });
-			if (!exist) throw { message: "题目 " + problemId + " 不存在" }
+			var problem = yield DB.Problem.findOne({ problemId: problemId }, "-_id -isHidden");
+			if (!problem) throw { message: "题目 " + problemId + " 不存在" }
+			contest.problems.push(problem);
 		}
 
 		yield contest.save();

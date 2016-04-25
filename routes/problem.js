@@ -99,14 +99,15 @@ router.post('/submit', function(req, res, next) {
 		var contestId = null;
 		if (req.query.contestId) contestId = parseInt(req.query.contestId);
 
-		var problem = yield DB.Problem.findOne({ problemId: problemId });
+		var problem = yield DB.Problem.findOne({ problemId: problemId }, "-_id");
 		console.log('problem:', problem);
 
-		if (!problem || (problem.isHidden && !contestId)) throw { message: "题目不存在" }
+		if (!problem || (problem.isHidden && contestId == null)) throw { message: "题目不存在" }
 
 		if (problem.isHidden) {
-			var isInContest = yield DB.Contest.findAndCount({ _id: contestId, problemId: problemId });
-			if (!isInContest) throw { message: "题目不存在" }
+			var contest = yield DB.Contest.findOne({ contestId: contestId, problemId: problemId });
+			if (!contest) throw { message: "题目不存在" }
+			if (contest.endTime <= new Date().getTime()) throw { message: "比赛结束" };
 		}
 
 		var srcCode = req.body.srcCode;

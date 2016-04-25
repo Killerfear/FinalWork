@@ -164,7 +164,8 @@ function($scope, $rootScope, $http, $routeParams, $uibModal, $window) {
       controller: 'submitModalCtrl',
       size: size,
       resolve: {
-        problemId: function() {  return $scope.problemId; }
+        problemId: function() {  return $scope.problemId; },
+        contestId: function() { return null; }
       }
     });
 
@@ -176,14 +177,20 @@ function($scope, $rootScope, $http, $routeParams, $uibModal, $window) {
 });
 
 OJControllers.controller('submitModalCtrl',
-function($scope, $uibModalInstance, $http, problemId) {
+function($scope, $uibModalInstance, $http, problemId, contestId) {
   $scope.isSubmitting = false;
   console.log($scope);
   console.log(problemId);
+  console.log(contestId);
   $scope.ok = function() {
     $scope.isSubmitting = true;
     console.log(problemId);
-    $http.post('/problem/submit', { srcCode: $scope.srcCode, problemId: problemId })
+    var postData = {
+      srcCode: $scope.srcCode,
+      problemId: problemId
+    }
+    if (contestId != null) postData.contestId = contestId;
+    $http.post('/problem/submit', postData)
     .success(function(data) {
       $scope.isSubmitting = false;
       if (data.result == 'success') {
@@ -672,10 +679,14 @@ function($scope, $rootScope, $http) {
 
 
 OJControllers.controller('contestshowCtrl',
-function($scope, $http, $routeParams, $interval) {
+function($scope, $rootScope, $http, $routeParams, $interval) {
   var contestId = $routeParams.contestId;
   $scope.activeTab = 0;
   $scope.contest = {};
+  $scope.activeProblem = {};
+  $scope.activeProblemOrder = 0;
+  $rootScope.currentPage = 0;
+  console.log($scope.xxx);
   $http.get('/contest/show/' + contestId)
        .success(function(data) {
          $scope.contest = data.contest;
@@ -684,6 +695,7 @@ function($scope, $http, $routeParams, $interval) {
            var problem = problems[i];
            console.log(i);
            problem.charId = String.fromCharCode(parseInt(i) + 65); //'A' + i
+           if (i == 0) $scope.activeProblem = problem
          }
          $scope.currentTime = new Date().getTime();
          if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
@@ -704,6 +716,44 @@ function($scope, $http, $routeParams, $interval) {
      res += sprintf("%d:%02d:%02d", hours, minute, second);
      return res;
    }
+
+   $scope.chooseProblem = function(charId) {
+     console.log($scope.contest.problems, charId);
+     var selectedProblem = _.find($scope.contest.problems, function(data) { console.log(data.charId); return data.charId == charId; });
+     if (selectedProblem) {
+       $scope.activeTab = 1;
+       $scope.activeProblem = selectedProblem;
+     }
+   }
+
+  $scope.open = function() {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      templateUrl: 'submitModal.html',
+      controller: 'submitModalCtrl',
+      resolve: {
+        problemId: function() {  return $scope.activeProblem.problemId; },
+        contestId: function() { return $scope.contest.contestId; }
+      }
+    });
+
+    modalInstance.result.then(function () {
+      $scope.goToStatusList();
+    });
+
+  }
+
+  $scope.goToStatusList = function(problemId) {
+    $scope.activeTab = 2;
+    $scope.status.problemId = "";
+
+    $scope.status.problemId = problemId;
+  }
+
+  var getStatusList = function() {
+
+  }
+
 
    $interval(function() {
      $scope.currentTime = new Date().getTime();

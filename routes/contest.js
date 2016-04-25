@@ -42,7 +42,7 @@ router.get('/show/:contestId', function(req, res, next) {
 		var contestId = req.params.contestId;
 
 		var contest = yield DB.Contest.findOne({ contestId: contestId })
-																	.select("-_id title startTime endTime problemId authorizee");
+																	.select("-_id title startTime endTime problems authorizee");
 
 		contest = contest.toObject();
 
@@ -57,22 +57,18 @@ router.get('/show/:contestId', function(req, res, next) {
 
 		if (curTime < contest.startTime) {
 			contest.isStart = false;
-		} else {
-			contest.isStart = true;
+			contest = _.pick("isStart");
+			return {
+				contest: contest
+			}
 		}
+
+
+
+		contest.isStart = true;
 
 		contest = _.omit(contest, "authorizee");
-
-		var sortedProblems = yield DB.Problem.find({ problemId: {$in: contest.problemId}}, "-_id -isHidden");
-
-		contest.problems = [];
-
-		for (var i in contest.problemId) {
-			var problemId = contest.problemId[i];
-			var pos = _.sortedIndexBy(sortedProblems, { problemId: problemId }, 'problemId');
-			contest.problems.push(sortedProblems[pos]);
-		}
-
+		console.log(contest.problems);
 
 		return {
 			contest: contest

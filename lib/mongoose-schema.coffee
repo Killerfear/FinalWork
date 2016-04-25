@@ -59,9 +59,9 @@ ContestSchema = new Schema
   isHidden: Boolean
   startTime: Number
   endTime: Number
-  problemId: [Number]
+  problems: { type: [ProblemSchema], default: [] }
   #private情况下,可访问的用户
-  authorizee: [String]
+  authorizee: { type: [String], default: [] }
 
 #create index
 
@@ -80,8 +80,8 @@ ContestSchema.index { contestId: "hashed" }
 
 
 ProblemSchema.plugin autoIncrement.plugin, { model: "Problem", field: "problemId", startAt: 1000 }
-SolutionSchema.plugin autoIncrement.plugin, { model: "Solution", field: "solutionId" }
-ContestSchema.plugin autoIncrement.plugin,  { model: "Contest", field : "contestId" }
+SolutionSchema.plugin autoIncrement.plugin, { model: "Solution", field: "solutionId", startAt: 1 }
+ContestSchema.plugin autoIncrement.plugin,  { model: "Contest", field : "contestId", startAt: 1 }
 
 exports.User = db.model "User", UserSchema
 exports.Problem = db.model "Problem", ProblemSchema
