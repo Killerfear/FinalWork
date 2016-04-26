@@ -241,12 +241,12 @@ function($scope, $uibModal, $http, $rootScope, $location, $interval) {
       if (solution.result <= 2) {
         var url = new URI('/status/solution/' + solution.solutionId).addSearch({pos : i }).toString();
         $http.get(url)
-             .success(function(data) {
-               $scope.solutions[data.pos] = _.assign($scope.solutions[data.pos], data.solution);
-             })
-             .error(function(err) {
-               alert("错误:" + err);
-             })
+        .success(function(data) {
+          $scope.solutions[data.pos] = _.assign($scope.solutions[data.pos], data.solution);
+        })
+        .error(function(err) {
+          alert("错误:" + err);
+        })
       }
     }
   }, 1000);
@@ -284,6 +284,22 @@ function($scope, $uibModal, $http, $rootScope, $location, $interval) {
     });
 
   }
+
+  $scope.showCE = function(solutionId) {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      templateUrl: 'ceInfoModal.html',
+      controller: 'ceInfoModalCtrl',
+      resolve: {
+        solutionId: function() {  return solutionId; }
+      }
+    });
+
+    modalInstance.result.then(function () {
+      $scope.goToStatusList();
+    });
+
+  }
 })
 
 OJControllers.controller('codeModalCtrl',
@@ -298,6 +314,17 @@ function($scope, $uibModalInstance, $http, solutionId) {
   })
 });
 
+OJControllers.controller('ceInfoModalCtrl',
+function($scope, $uibModalInstance, $http, solutionId) {
+  console.log(solutionId);
+  $http.get('/status/ce/' + solutionId)
+  .success(function(data) {
+    $scope.text = data.ce;
+  })
+  .error(function(err) {
+    console.log("错误:" + err)
+  })
+});
 
 OJControllers.controller('adminproblemCtrl',
 function($scope, $http, $rootScope, $uibModal) {
@@ -325,12 +352,12 @@ function($scope, $http, $rootScope, $uibModal) {
 
     modalInstance.result.then(function () {
       $http.get('/admin/problem/delete?problemId=' + problemId)
-          .success(function(data) {
-            _.remove($scope.problems, function(problem) { return problem.problemId == problemId; });
-          })
-          .error(function(err) {
-            alert("错误:" + err);
-          })
+      .success(function(data) {
+        _.remove($scope.problems, function(problem) { return problem.problemId == problemId; });
+      })
+      .error(function(err) {
+        alert("错误:" + err);
+      })
     });
 
   }
@@ -396,12 +423,12 @@ function($scope, $routeParams, $http, $uibModal, $window, Upload) {
   $scope.problemId = $routeParams.problemId;
   $scope.getDataList = function() {
     $http.get('/admin/problem/data/list?problemId=' + $scope.problemId)
-         .success(function(data) {
-           $scope.files = data.files;
-         })
-         .error(function(err) {
-           alert("错误:" + err);
-         })
+    .success(function(data) {
+      $scope.files = data.files;
+    })
+    .error(function(err) {
+      alert("错误:" + err);
+    })
   }
 
   // upload on file select or drop
@@ -457,12 +484,12 @@ function($scope, $routeParams, $http, $uibModal, $window, Upload) {
 
     modalInstance.result.then(function() {
       $http.delete('/admin/problem/testdata?problemId=' + $scope.problemId + "&fileName=" + fileName)
-           .success(function(data) {
-              $scope.getDataList();
-           })
-           .error(function(err) {
-             alert("错误:" + err);
-           })
+      .success(function(data) {
+        $scope.getDataList();
+      })
+      .error(function(err) {
+        alert("错误:" + err);
+      })
     })
 
   }
@@ -473,25 +500,25 @@ function($scope, $routeParams, $http, $uibModal, $window, Upload) {
 
 OJControllers.controller('editDataModalCtrl',
 function($uibModalInstance, $http, $scope, problemId, fileName) {
-    $http.get('/admin/problem/testdata?problemId=' + problemId + "&fileName=" +fileName)
-         .success(function(data) {
-           $scope = _.assign($scope, data);
-           $scope.data.problemId = problemId;
-           console.log($scope);
-         })
-         .error(function(err) {
-           alert("错误:" + err);
-         })
+  $http.get('/admin/problem/testdata?problemId=' + problemId + "&fileName=" +fileName)
+  .success(function(data) {
+    $scope = _.assign($scope, data);
+    $scope.data.problemId = problemId;
+    console.log($scope);
+  })
+  .error(function(err) {
+    alert("错误:" + err);
+  })
 
 
   $scope.save = function() {
     $http.post('/admin/problem/testdata', { data: $scope.data })
-         .success(function(data) {
-           $uibModalInstance.close();
-         })
-         .error(function(err) {
-           alert("错误: " + err);
-         });
+    .success(function(data) {
+      $uibModalInstance.close();
+    })
+    .error(function(err) {
+      alert("错误: " + err);
+    });
   }
 
   $scope.cancel = function() {
@@ -538,12 +565,12 @@ function($scope, $http, $rootScope, $uibModal) {
 
     modalInstance.result.then(function () {
       $http.get('/admin/contest/delete?contestId=' + contestId)
-           .success(function(data) {
-              _.remove($scope.contests, function(contest) { return contest.contestId == contestId; });
-           })
-           .error(function(err) {
-             alert("错误: " + err);
-           })
+      .success(function(data) {
+        _.remove($scope.contests, function(contest) { return contest.contestId == contestId; });
+      })
+      .error(function(err) {
+        alert("错误: " + err);
+      })
     });
 
   }
@@ -576,22 +603,22 @@ function($scope, $http, $location, $window) {
   if (contestId) {
     $scope.contest.contestId = contestId;
     $http.get('/admin/contest/data?contestId=' + contestId)
-         .success(function(data) {
-           var contest = data.contest;
-           if (contest) {
-             $scope.pageTitle = "Edit Contest";
-             $scope.contest = data.contest;
-             var length = data.contest.endTime - data.contest.startTime;
-             $scope.duration.day = parseInt(length / (24 * 60 * 60 * 1000));
-             length %= (24 * 60 * 60 * 1000);
-             $scope.duration.hour = parseInt(length / (60 * 60 * 1000));
-             length %= (60 * 60 * 1000);
-             $scope.duration.minute = parseInt(length / (60 * 1000));
-             for (var i in data.contest.problemId) {
-               $scope.problems.push({ id: data.contest.problemId[i] })
-             }
-           }
-         })
+    .success(function(data) {
+      var contest = data.contest;
+      if (contest) {
+        $scope.pageTitle = "Edit Contest";
+        $scope.contest = data.contest;
+        var length = data.contest.endTime - data.contest.startTime;
+        $scope.duration.day = parseInt(length / (24 * 60 * 60 * 1000));
+        length %= (24 * 60 * 60 * 1000);
+        $scope.duration.hour = parseInt(length / (60 * 60 * 1000));
+        length %= (60 * 60 * 1000);
+        $scope.duration.minute = parseInt(length / (60 * 1000));
+        for (var i in data.contest.problemId) {
+          $scope.problems.push({ id: data.contest.problemId[i] })
+        }
+      }
+    })
   }
 
   if (!$scope.pageTitle) {
@@ -605,17 +632,17 @@ function($scope, $http, $location, $window) {
   $scope.getTitle = function(problemId, idx) {
     if (!problemId) return;
     $http.get("/problem/data/" + problemId)
-         .success(function(data) {
-           var problem = data.problem;
-           if (problem) {
-             $scope.problems[idx].title = problem.title;
-             $scope.problems[idx].isFound = true;
-           }
-         })
-         .error(function(err) {
-             $scope.problems[idx].title = "No Such Problem";
-             $scope.problems[idx].isFound = false;
-         })
+    .success(function(data) {
+      var problem = data.problem;
+      if (problem) {
+        $scope.problems[idx].title = problem.title;
+        $scope.problems[idx].isFound = true;
+      }
+    })
+    .error(function(err) {
+      $scope.problems[idx].title = "No Such Problem";
+      $scope.problems[idx].isFound = false;
+    })
   }
 
   $scope.add = function() {
@@ -647,27 +674,29 @@ function($scope, $http, $location, $window) {
       $scope.contest.problemId.push($scope.problems[i].id);
     }
     console.log($scope.authorizee);
-    $scope.contest.authorizee = $scope.authorizee.split(/\s+|,/);
-
+    $scope.contest.authorizee = [];
+    ($scope.authorizee.split(/\s+|,/)).forEach(function(auth) {
+      if (auth.length) $scope.contest.authorizee.push(auth);
+    })
 
     if ($scope.pageTitle == "Add Contest")  {
       $http.put('/admin/contest', { contest: $scope.contest })
-           .success(function(data) {
-              alert("添加成功");
-              $window.location.href = "/#/admin/contest";
-           })
-           .error(function(err) {
-             alert("错误: " + err);
-           });
+      .success(function(data) {
+        alert("添加成功");
+        $window.location.href = "/#/admin/contest";
+      })
+      .error(function(err) {
+        alert("错误: " + err);
+      });
     } else {
       $http.post('/admin/contest/data', { contest: $scope.contest })
-           .success(function(data) {
-             alert("修改成功");
-             $window.location.href = "/#/admin/contest";
-           })
-           .error(function(err) {
-             alert("错误: " + err);
-           })
+      .success(function(data) {
+        alert("修改成功");
+        $window.location.href = "/#/admin/contest";
+      })
+      .error(function(err) {
+        alert("错误: " + err);
+      })
     }
   }
 });
@@ -740,44 +769,44 @@ function($scope, $rootScope, $uibModal, $http, $routeParams, $interval) {
   $rootScope.currentPage = 0;
   console.log($scope.xxx);
   $http.get('/contest/show/' + contestId)
-       .success(function(data) {
-         $scope.contest = data.contest;
-         var problems = $scope.contest.problems;
-         $scope.search.problems = [ { text: "All" }];
-         for (var i in problems) {
-           var problem = problems[i];
-           problem.charId = String.fromCharCode(parseInt(i) + 65); //'A' + i
-           $scope.search.problems.push({ text: problem.charId, value: problem.problemId });
-           if (i == 0) $scope.activeProblem = problem
-         }
-         $scope.currentTime = new Date().getTime();
-         if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
-         else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
-         else $scope.contest.status = 2;
-       })
-       .error(function(err) {
-         alert("错误: " + err);
-       })
+  .success(function(data) {
+    $scope.contest = data.contest;
+    var problems = $scope.contest.problems;
+    $scope.search.problems = [ { text: "All" }];
+    for (var i in problems) {
+      var problem = problems[i];
+      problem.charId = String.fromCharCode(parseInt(i) + 65); //'A' + i
+      $scope.search.problems.push({ text: problem.charId, value: problem.problemId });
+      if (i == 0) $scope.activeProblem = problem
+    }
+    $scope.currentTime = new Date().getTime();
+    if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
+    else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
+    else $scope.contest.status = 2;
+  })
+  .error(function(err) {
+    alert("错误: " + err);
+  })
 
-   $scope.getDuration = function(duration) {
-     var hours = parseInt(duration / (60 * 60 * 1000));
-     duration %= (60 * 60 * 1000);
-     var minute = parseInt(duration / (60 * 1000));
-     duration %= (60 * 1000);
-     var second =  parseInt(duration / 1000);
-     var res = "";
-     res += sprintf("%d:%02d:%02d", hours, minute, second);
-     return res;
-   }
+  $scope.getDuration = function(duration) {
+    var hours = parseInt(duration / (60 * 60 * 1000));
+    duration %= (60 * 60 * 1000);
+    var minute = parseInt(duration / (60 * 1000));
+    duration %= (60 * 1000);
+    var second =  parseInt(duration / 1000);
+    var res = "";
+    res += sprintf("%d:%02d:%02d", hours, minute, second);
+    return res;
+  }
 
-   $scope.chooseProblem = function(charId) {
-     console.log($scope.contest.problems, charId);
-     var selectedProblem = _.find($scope.contest.problems, function(data) { console.log(data.charId); return data.charId == charId; });
-     if (selectedProblem) {
-       $scope.activeTab = 1;
-       $scope.activeProblem = selectedProblem;
-     }
-   }
+  $scope.chooseProblem = function(charId) {
+    console.log($scope.contest.problems, charId);
+    var selectedProblem = _.find($scope.contest.problems, function(data) { console.log(data.charId); return data.charId == charId; });
+    if (selectedProblem) {
+      $scope.activeTab = 1;
+      $scope.activeProblem = selectedProblem;
+    }
+  }
 
   $scope.open = function() {
     if (new Date().getTime() >= $scope.contest.endTime) {
@@ -847,37 +876,69 @@ function($scope, $rootScope, $uibModal, $http, $routeParams, $interval) {
   }
 
 
-   $interval(function() {
-     $scope.currentTime = new Date().getTime();
-     if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
-     else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
-     else $scope.contest.status = 2;
+  $interval(function() {
+    $scope.currentTime = new Date().getTime();
+    if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
+    else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
+    else $scope.contest.status = 2;
 
-     if ($scope.activeTab == 2) {
-       //refresh
-       refreshStatus();
-     }
-   }, 1000);
+    if ($scope.activeTab == 2) {
+      //refresh
+      refreshStatus();
+    }
+  }, 1000);
 
-   $scope.alert = function(obj) {
-     console.log(obj);
-     alert(obj.toString());
-   }
+  $scope.alert = function(obj) {
+    console.log(obj);
+    alert(obj.toString());
+  }
 
-   $scope.status = {};
-   $scope.status.problemId = -1;
-   $scope.status.result = -1;
+  $scope.status = {};
+  $scope.status.problemId = -1;
+  $scope.status.result = -1;
 
-   $scope.getProblemCharId = function(problemId) {
-     var problem = _.find($scope.contest.problems, function(data) { return data.problemId == problemId });
-     return problem.charId;
-   }
+  $scope.getProblemCharId = function(problemId) {
+    var problem = _.find($scope.contest.problems, function(data) { return data.problemId == problemId });
+    return problem.charId;
+  }
+
+  $scope.formatDuration = function(ms) {
+    var minute = parseInt(ms % (1000 * 60 * 60) / (1000 * 60) + 1e-8);
+    var hour = parseInt(ms / (1000 * 60 * 60) + 1e-8);
+
+    return sprintf("%d:%02d", hour , minute);
+  }
+
+  $scope.getRanklist = function() {
+    $http.get('/contest/rank/' + $scope.contest.contestId)
+         .success(function(data) {
+           $scope.ranklist = data.ranklist;
+         })
+         .error(function(err) {
+           alert("错误:" + err);
+         })
+  }
 
   $scope.showCode = function(solutionId) {
     var modalInstance = $uibModal.open({
       animation: true,
       templateUrl: 'codeModal.html',
       controller: 'codeModalCtrl',
+      resolve: {
+        solutionId: function() {  return solutionId; }
+      }
+    });
+
+    modalInstance.result.then(function () {
+      $scope.goToStatusList();
+    });
+
+  }
+  $scope.showCE = function(solutionId) {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      templateUrl: 'ceInfoModal.html',
+      controller: 'ceInfoModalCtrl',
       resolve: {
         solutionId: function() {  return solutionId; }
       }

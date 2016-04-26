@@ -59,7 +59,7 @@ if (cluster.isMaster) {
 	//master
 
 	process.chdir(__dirname);
-	//child_process.execSync("rm -rf run*");
+	child_process.execSync("./clean.sh");
 
 	var workers = [];
 	for (var i = 0; i < numCPUs; ++i) {
@@ -106,7 +106,7 @@ if (cluster.isMaster) {
 		console.log("2");
 
 		var ce = yield [compile(submit.srcCode), solution.save()][0];
-		console.log(ce);
+			console.log(ce);
 
 		if (ce) {
 			solution.result = OJ_CE;

@@ -29,7 +29,14 @@
         <td class='text-center'>{{solution.solutionId}}</td>
         <td class='text-center'><a href="#">{{ solution.username }}</a></td>
         <td class='text-center'><a href="/#/problem/show/{{ solution.problemId }}">{{ solution.problemId }}</a></td>
-        <td class='text-center'>{{ solution.resultText }}</td>
+        <td class='text-center' ng-class="{'text-success' : solution.result==8, 'text-danger': solution.result!=8}">
+          <a href='javascript:void(0);' ng-click=showCE(solution.solutionId) ng-show="solution.result==3">
+            {{ solution.resultText }}
+          </a>
+          <span ng-hide="solution.result==3" style="font-weight:bold;">
+            {{ solution.resultText }}
+          </span>
+        </td>
         <td class='text-center'><span ng-show="solution.result > 3">{{ solution.memory }} KB</span></td>
         <td class='text-center'><span ng-show="solution.result > 3">{{ solution.time }} MS</span></td>
         <td class='text-center'>
@@ -47,4 +54,9 @@
       </div>
   </script>
 
+  <script type="text/ng-template" id="ceInfoModal.html">
+      <div class="modal-body">
+        <pre>{{text}}</pre>
+      </div>
+  </script>
 </div>

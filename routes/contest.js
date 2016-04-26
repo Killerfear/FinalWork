@@ -5,6 +5,7 @@ var router = express.Router();
 var co = require('co');
 var fs = require('fs');
 var _ = require('lodash');
+var assert = require('assert');
 
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
@@ -70,7 +71,6 @@ router.get('/show/:contestId', function(req, res, next) {
 		contest.isStart = true;
 
 		contest = _.omit(contest, "authorizee");
-		console.log(contest.problems);
 
 		return {
 			contest: contest
@@ -107,10 +107,17 @@ router.get('/rank/:contestId', function(req, res, next) {
 																	.select("-_id");
 
 	  if (!contest) throw { message: "比赛不存在" };
+		contest = contest.toObject();
 
 		var solutions = yield DB.Solution.find({ contestId: req.params.contestId })
 																	   .select("-_id username result solutionId problemId submitTime")
 																		 .sort("-solutionId");
+
+
+
+		console.log("before map:", solutions);
+
+		var participants = contest.authorizee;
 
 		solutions = _.map(solutions, function(data) {
 			if (data.result > 2) {
@@ -121,43 +128,82 @@ router.get('/rank/:contestId', function(req, res, next) {
 				}
 			}
 
-			data.problemId = _.findIndex(contest.problems, function(problem) { return problem.problemId == data.problemId});
+			console.log(data.problemId);
+			data.problemId = _.findIndex(contest.problems, ['problemId', data.problemId]);
 			return data;
 		});
+		console.log("after map:", solutions);
 
 		var result = _.reduce(solutions, function(result, solution) {
+			console.log(result);
 			var user = solution.username;
 			var charId = solution.problemId;
-			if (!result[user]) result[user] = { penaty: 0, solved: 0 };
+			if (!result[user]) {
+				result[user] = { penalty: 0, solved: 0 };
+				participants.push(user);
+			}
 			if (!result[user][charId]) result[user][charId] = {  wa: 0, wait: 0 };
 			if (solution.result  > 3) result[user][charId]['wa']++;
 			else if (solution.result <= 2) result[user][charId]['wait']++;
 			else {
-				result[user][charId]['ac'] = parseInt(solutions.submitTime / 1000 + 0.00000001);
+				console.log(solution.submitTime);
+				result[user][charId]['ac'] = ~~((solution.submitTime - contest.startTime) / (1000 * 60));
 				result[user][charId]['wait'] = result[user][charId]['wa'] = 0;
 			}
+			return result;
 		}, {})
+		console.log("after reduce:", result);
+
+		participants.sort();
+		participants = _.sortedUniq(participants);
+
+		var userInfos = yield DB.User.find({ username: { $in: participants }})
+																.select("-_id username nickname")
+																.sort("username");
 
 		var ranklist = [];
+
+		for (var i in contest.authorizee) {
+				var user = contest.authorizee[i];
+				if (!result[user]) {
+					ranklist.push({ username: user, solved: 0, penalty: 0, problems: {} });
+				}
+		}
+
+
 		for (var user in result) {
+			var data = { problems: {}, penalty: 0, solved: 0 };
 			for (var id = 0; id < contest.problems.length; ++id) {
 				if (!result[user][id]) {
-					result[user][id] = {};
+					result[user][id] = { wa: 0, wait: 0 };
 				}
+				data.problems[id] = result[user][id];
 				var info = result[user][id];
 				if (_.has(info, "ac")) {
-					++result[user].solved;
-					result[user].penaty += info.ac + 20 * 60 * info.wa;
+					++data.solved;
+					data.penalty += info.ac + 20 * info.wa;
+					info.ac *= 60 * 1000;
+				} else {
+					info.ac = -1;
+					info.wa = -info.wa;
+					info.wait = -info.wait;
 				}
 				info.wa += info.wait;
 				result[user][id] = _.omit(info, "wait");
 			}
-			result[user].username = user;
-			ranklist.push(result[user]);
+			data.username = user;
+			console.log(user);
+			ranklist.push(data);
 		}
 
-
-		ranklist = _.orderBy(ranklist, ['solved', 'penaty'], ['desc', 'asc'])
+		ranklist = _.orderBy(ranklist, ['solved', 'penalty', 'username'], ['desc', 'asc', 'asc'])
+		for (var i in ranklist) {
+			var rank = ranklist[i];
+			var user = rank.username;
+			var pos = _.sortedIndexOf(participants, user);
+			assert.notEqual(pos, -1, "Must be founded");
+			rank.nickname = userInfos[pos].nickname;
+		}
 
 
 		return {

@@ -85,4 +85,20 @@ router.get('/code/:solutionId', function(req, res, next) {
 	}));
 })
 
+router.get('/ce/:solutionId', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var user = req.user;
+		var solutionId = req.params.solutionId;
+		var solution = yield DB.Solution.findOne({solutionId: solutionId})
+																		.select("-_id error username");
+	  var ce = "";
+		if (solution && user.username && solution.username == user.username) {
+			ce = solution.error;
+		}
+
+		return {
+			ce: ce
+		}
+	}));
+})
 module.exports = router;
