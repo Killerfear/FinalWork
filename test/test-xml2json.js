@@ -30,7 +30,7 @@ bluebird.promisifyAll(http);
  */
 var AddProblem = co.wrap(function * (problem) {
 	return new Promise(function(resolve, reject) {
-		
+
 		problem['timeLimit'] = problem['time_limit'];
 		problem['memLimit'] = problem['memory_limit'];
 		problem['sampleInput'] = problem['sample_input'];
@@ -43,12 +43,11 @@ var AddProblem = co.wrap(function * (problem) {
 			problem: problem
 		}
 		var postData = JSON.stringify(body);
-		console.log(postData);
 
 		var options = {
 			path: "/admin/problem/add",
 			method: "POST",
-			
+
 			headers: {
 				"Host": "localhost",
 				"Connection": "keep-alive",
@@ -59,7 +58,7 @@ var AddProblem = co.wrap(function * (problem) {
 				"Referer": "http://localhost/",
 				"Accept-Encoding": "gzip, deflate, sdch",
 				"Accept-Language": "zh-CN,zh;q=0.8",
-				"Cookie": "connect.sid=s%3AxjEXa9tPgbQvzZjkMNBaZDt8l8-pwpca.xlxOte34w%2Bh1wQ26FsxGthz0QQi3%2BpdeXEUhzvV2gn8",
+				"Cookie": "connect.sid=s%3AS-mr7NYxQbO8GoXzwIaZdRdBbRwW94Yr.9ELYW53qAFUStJoqGrQJcTKXiu7PuMRT0cCev67Vors"
 			}
 		}
 
@@ -70,7 +69,7 @@ var AddProblem = co.wrap(function * (problem) {
 				resData += chunk;
 			});
 			res.on('end', function() {
-				console.log(resData);
+				//console.log(resData);
 				var data = JSON.parse(resData);
 					resolve(data);
 			});
@@ -94,6 +93,10 @@ co(function * () {
 		js = js.fps.item;
 		if (js.img) continue;
 		if (js.spj) continue;
+
+		console.log("Add Problem", file);
+	//	AddProblem(js);
+
 		if (!js.test_input || !js.test_output) continue;
 		var dataIn = [], dataOut = [];
 		if (typeof js.test_input != 'object') dataIn.push(js.test_input);
@@ -117,13 +120,12 @@ co(function * () {
 
 
 		var filePath = path.join(__dirname, "../problem/", problem.problemId.toString());
-		console.log("Add Problem", file);
 
 		for (var i in dataIn) {
 			var inTxt = dataIn[i];
 			var outTxt = dataOut[i];
-			yield [ 
-					fs.writeFileAsync(path.join(filePath, "data" + i + ".in"), inTxt),
+			yield [
+						fs.writeFileAsync(path.join(filePath, "data" + i + ".in"), inTxt),
 				  	fs.writeFileAsync(path.join(filePath, "data" + i + ".out"), outTxt)
 				  ]
 		}

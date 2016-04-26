@@ -43,10 +43,11 @@ function sprintf() {
 var OJControllers = angular.module('OJControllers', ['ngFileUpload']);
 
 OJControllers.controller('navCtrl',
-function($rootScope, $http, $scope, $window) {
+function($rootScope, $http, $scope, $window, $location) {
+  console.log($location);
+  $scope.location = $location.url().match(/^\/(\w+)\//)[1];
   $http.get('/user/data')
   .success(function(data) {
-    console.log("zzzz");
     $scope.isAdmin = $rootScope.isAdmin = data.isAdmin;
     $scope.username = $rootScope.username = data.username;
     if (data.username && data.username.length) {
@@ -472,18 +473,18 @@ function($scope, $routeParams, $http, $uibModal, $window, Upload) {
     });
   }
 
-  $scope.openDelete = function(fileName) {
+  $scope.openDelete = function(file) {
     var modalInstance = $uibModal.open({
       animation: true,
       templateUrl: 'deleteDataModal.html',
       controller: 'deleteDataModalCtrl',
       resolve: {
-        fileName: function() { return fileName; }
+        file: function() { return file; }
       }
     });
 
     modalInstance.result.then(function() {
-      $http.delete('/admin/problem/testdata?problemId=' + $scope.problemId + "&fileName=" + fileName)
+      $http.delete('/admin/problem/testdata?problemId=' + $scope.problemId + "&fileName=" + file.fileName)
       .success(function(data) {
         $scope.getDataList();
       })
@@ -528,8 +529,8 @@ function($uibModalInstance, $http, $scope, problemId, fileName) {
 
 
 OJControllers.controller('deleteDataModalCtrl',
-function($uibModalInstance, $scope, fileName) {
-  $scope.fileName = fileName;
+function($uibModalInstance, $scope, file) {
+  $scope.file = file;
   $scope.yes = function() {
     $uibModalInstance.close();
   }

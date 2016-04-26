@@ -27,7 +27,7 @@
         <td>{{file.fileName}}</td>
         <td>{{file.fileSize}}</td>
         <td><a class='glyphicon glyphicon-edit' href='javascript:void(0);' ng-click='openEdit(file.fileName)'></a></td>
-        <td><a class='glyphicon glyphicon-trash' href='javascript:void(0);' ng-click='openDelete(file.fileName)'></a></td>
+        <td><a class='glyphicon glyphicon-trash' href='javascript:void(0);' ng-click='openDelete(file)'></a></td>
       </tr>
     </tbody>
   </table>
@@ -38,7 +38,7 @@
 		<h3 class="modal-title" ng-model='data.fileName'>{{data.fileName}}</h3>
 	</div>
 	<div class="modal-body">
-		<textarea ng-model='data.text'></textarea>
+		<textarea ng-model='data.text' style="width:100%;height:400px;"></textarea>
 	</div>
 	<div class="modal-footer">
 		<button class="btn btn-default" type="button" ng-click="save()">Save</button>
@@ -48,10 +48,10 @@
 
 <script type="text/ng-template" id="deleteDataModal.html">
 	<div class="modal-header">
-		<h3 class="modal-title" ng-model='data.fileName'>{{data.fileName}}</h3>
+		<h3 class="modal-title">{{file.fileName}}</h3>
 	</div>
 	<div class="modal-body">
-    Are you sure to delete {{data.fileName}} ?
+    Are you sure to delete {{file.fileName}} ?
 	</div>
 	<div class="modal-footer">
 		<button class="btn btn-default" type="button" ng-click="yes()">Yes</button>

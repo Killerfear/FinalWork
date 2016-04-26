@@ -48,9 +48,9 @@ router.get('/show/:contestId', function(req, res, next) {
 		var contest = yield DB.Contest.findOne({ contestId: contestId })
 																	.select("-_id contestId title startTime endTime problems authorizee");
 
-		contest = contest.toObject();
 
 		if (!contest || (!user.isAdmin && contest.isHidden)) throw { message: "比赛不存在" }
+		contest = contest.toObject();
 		if (contest.isPrivate && !user.isAdmin && _.indexOf(contest.authorizee, user.username) == -1) {
 			return {
 				contest: _.pick(contest, "isPrivate")

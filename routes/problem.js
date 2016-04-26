@@ -38,7 +38,7 @@ router.get('/list/:page', function(req, res, next) {
 
 		var promises = yield [
 													 DB.Problem.find({ isHidden : false }).select("title problemId -_id").sort("problemId").skip(skip).limit(limit),
-													 redis.getAsync('problemCount')
+													 DB.Problem.count({ isHidden: false })
 												 ];
     var problems = promises[0];
 		var problemCount = promises[1];
@@ -133,7 +133,6 @@ router.post('/submit', function(req, res, next) {
 		console.log("solution save done!");
 		yield user.save();
 		console.log("user save done!");
-		yield redis.incrAsync('solutionCount');
 		console.log("after yield save()");
 
 		var judgeData = {

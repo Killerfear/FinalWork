@@ -38,16 +38,13 @@ router.get("/problem/list/:page", function(req, res, next) {
 
 		console.log("find");
 
-		var promises = yield [
-
-		]
 
 		var promises = yield [ DB.Problem.find()
 														  .sort("problemId")
-															.select("title problemId")
+															.select("-_id title problemId")
 															.skip(skip)
 															.limit(limit),
-													 redis.getAsync('problemCount')
+													 DB.Problem.count()
 												]
 
 		var problems = promises[0];
@@ -102,13 +99,10 @@ router.post("/problem/add", function(req, res, next) {
 
 		problem = new DB.Problem(problem);
 		problem = yield problem.save();
-		var problemCount = yield DB.Problem.count();
 		console.log(problem);
 
 		var sampleInput = problem.sampleInput;
 		var sampleOutput = problem.sampleOutput;
-
-		yield redis.setAsync("problemCount", problemCount);
 
 		var id = problem.problemId;
 
@@ -199,8 +193,8 @@ router.get("/problem/data/list", function(req, res, next) {
 			var fileStat = yield fs.lstatAsync(filePath);
 
 			var size = fileStat.size;
-			if (size > (1 << 20)) size = (size / (1 << 20)) + " MB";
-			else if (size > (1 << 10)) size = (size / 1024) + " KB";
+			if (size > (1 << 20)) size = (size  >> 20) + " MB";
+			else if (size > (1 << 10)) size = (size >> 10)  + " KB";
 			else size = size + " B";
 			dataFile[i] = { fileName: name, fileSize: size };
 		}

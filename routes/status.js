@@ -21,6 +21,9 @@ router.get('/solution/:solutionId', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var solution = yield DB.Solution.findOne({ solutionId: req.params.solutionId })
 																  .select("result -_id memory time");
+
+		if (!solution) throw { message: "solution 不存在" };
+
 		solution = solution.toObject();
 		solution.memory >>= 10;
 	  solution.resultText = OJ_RESULT[solution.result];

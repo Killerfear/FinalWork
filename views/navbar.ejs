@@ -14,13 +14,13 @@
           </div>
           <div class="collapse navbar-collapse" id="navbar-ex-collapse">
             <ul class="nav navbar-left navbar-nav">
-              <li class="active">
-                <a href="/#/problem/list">Problem<span class='sr-only'>(current)</a>
+              <li ng-class="{ active : location == 'problem' }">
+                <a href="/#/problem/list">Problem</a>
               </li>
-              <li>
+              <li ng-class="{ active : location == 'status' }">
                 <a href="/#/status/list">Status</a>
               </li>
-              <li>
+              <li ng-class="{ active : location == 'contest' }">
                 <a href="/#/contest/list">Contest<br></a>
               </li>
             </ul>
