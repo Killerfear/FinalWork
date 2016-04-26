@@ -1,5 +1,6 @@
 var xml2js = require('xml2js');
 var co = require('co');
+var path = require('path');
 var fs = require('fs');
 var querystring = require('querystring');
 var bluebird = require('bluebird');
@@ -82,12 +83,10 @@ var AddProblem = co.wrap(function * (problem) {
 
 co(function * () {
 	var files = yield fs.readdirAsync('../../parseProblem');
-	flag = false;
 	for (var i in files) {
 		var file = files[i];
 		if (!file.match(/problem*/)) continue;
-		if (file == 'problem2438') flag = true;
-		if (!flag) continue;
+//		if (file != "problem1097") continue;
 		var xml = yield fs.readFileAsync('../../parseProblem/' + file, "utf8");
 
 		var js = yield xml2js.parseStringAsync(xml, { ignoreAttrs : true, explicitArray: false  });
@@ -95,11 +94,47 @@ co(function * () {
 		js = js.fps.item;
 		if (js.img) continue;
 		if (js.spj) continue;
-		console.log("addProblem", file);
+		if (!js.test_input || !js.test_output) continue;
+		var dataIn = [], dataOut = [];
+		if (typeof js.test_input != 'object') dataIn.push(js.test_input);
+		else dataIn = js.test_input;
+
+		if (typeof js.test_output != 'object') dataOut.push(js.test_output);
+		else dataOut = js.test_output;
+
+		var problem = yield DB.Problem.findOne({ title : js.title });
+
+		if (!problem) {
+			console.log("Problem", js.title, " not found");
+			continue;
+		}
+
+		if (dataIn.length != dataOut.length) {
+			console.log("Problem", js.title, " data number not coincident");
+			continue;
+		}
+
+
+
+		var filePath = path.join(__dirname, "../problem/", problem.problemId.toString());
+		console.log("Add Problem", file);
+
+		for (var i in dataIn) {
+			var inTxt = dataIn[i];
+			var outTxt = dataOut[i];
+			yield [ 
+					fs.writeFileAsync(path.join(filePath, "data" + i + ".in"), inTxt),
+				  	fs.writeFileAsync(path.join(filePath, "data" + i + ".out"), outTxt)
+				  ]
+		}
+
+		console.log("Add Problem", file, " Done!");
+
+
 		//console.log(_.keys(js));
 		//console.log(js.sample_output);
-		var response = yield AddProblem(js);
-		console.log(response);
+		//var response = yield AddProblem(js);
+		//console.log(response);
 		//
 
 

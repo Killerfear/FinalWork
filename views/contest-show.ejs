@@ -8,7 +8,7 @@
   <div class='col-md-12'>
     <div class="active progress progress-striped">
       <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{(currentTime - contest.startTime) / (contest.endTime - contest.startTime) * 100}}%;">
-        <span ng-show="currentTime < contest.endTime">{{getDuration(currentTime - contest.startTime)}}</span>
+        <span ng-show="contest.startTime <= currentTime  && currentTime < contest.endTime">{{getDuration(currentTime - contest.startTime)}}</span>
       </div>
     </div>
   </div>
@@ -69,7 +69,7 @@
           <br />
           <div class='text-center'>
             <button type='button' class='btn btn-default' ng-click='open()'>Submit</button>
-            <button type='button' class='btn btn-default' ng-click='goToStatusList()'>Status</button>
+            <button type='button' class='btn btn-default' ng-click='goToStatusList(true)'>Status</button>
           </div>
           <h2>Description</h2>
           <div class='col-md-12' ng-bind-html='activeProblem.description'></div>
@@ -89,44 +89,50 @@
         </div>
 
       </uib-tab>
-      <uib-tab heading='Status' ng-show="contest.isStart">
+      <uib-tab heading='Status' ng-show="contest.isStart" ng-click="goToStatusList(false)">
         <div ng-include="'/views/pagination.ejs'"></div>
 
-        <div class='container'>
+        <div class='container text-center'>
           <table class='table'>
             <thead>
-              <th class='col-md-1'>Problem</th>
-              <th class='col-md-2'>Result</th>
-              <th class='col-md-2'>Memory</th>
-              <th class='col-md-2'>Time</th>
-              <th class='col-md-2'>Length</th>
-              <th class='col-md-3'>Submit Time</th>
+              <th class='col-md-1 text-center'>Problem</th>
+              <th class='col-md-2 text-center'>Result</th>
+              <th class='col-md-2 text-center'>Memory</th>
+              <th class='col-md-2 text-center'>Time</th>
+              <th class='col-md-2 text-center'>Length</th>
+              <th class='col-md-3 text-center'>Submit Time</th>
             </thead>
             <tbody>
               <tr>
                 <td>
-                  <select style="height: 26px;" class="form-control" ng-model="status.problemId" ng-option="problem.problemId as {{problem.charId}} for problem in contest.problems"
-                  >
-                    <option value="-1">All</option>
-                    <option value="problem.problemId" ng-repeat="problem in contest.problems">{{problem.charId}}</option>
+                  <select class="form-control" ng-model="status.problemId" ng-options="problem.value as problem.text for problem in search.problems"
+                  ng-change="refreshStatus()">
+                    <!--option value="problem.problemId" ng-repeat="problem in contest.problems">{{problem.charId}}</option-->
                   </select>
                 </td>
 
-                <td><input type='text' ng-model='query.problemId' ng-change='getItems()'></td>
-                <td><input type='text' ng-model='query.result' ng-change='getItems()'></td>
+                <td>
+                  <select class="form-control" ng-model="status.result" ng-options="result.value as result.text for result in search.results"
+                  ng-change="refreshStatus()">
+                    <!--option value="-1">All</option-->
+                    <!--option value="result.value" ng-repeat="result in results">{{result.text}}</option-->
+                  </select>
+                </td>
               </tr>
               <tr ng-repeat='solution in solutions'>
-                <td>{{solution.solutionId}}</td>
-                <td><a href="#">{{ solution.username }}</a></td>
-                <td><a href="/#/problem/show/{{ solution.problemId }}">{{ solution.problemId }}</a></td>
-                <td>{{ solution.resultText }}</td>
+                <td class='text-center'>
+                  <a href="javascript:void(0);" ng-click="chooseProblem(getProblemCharId(solution.problemId))">
+                    {{ getProblemCharId(solution.problemId) }}
+                  </a>
+                </td>
+                <td class='text-center'>{{ solution.resultText }}</td>
                 <td><span ng-show="solution.result > 3">{{ solution.memory }} KB</span></td>
                 <td><span ng-show="solution.result > 3">{{ solution.time }} MS</span></td>
-                <td>
+                <td class='text-center'>
                   <a href="javascript:void(0);" ng-show='solution.username == username' ng-click='showCode(solution.solutionId)'>{{ solution.codeLength }} B</a>
                   <span ng-hide='solution.username == username'>{{solution.codeLength}} B</span>
                 </td>
-                <td>{{ solution.submitTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+                <td class='text-center'>{{ solution.submitTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
               </tr>
             </tbody>
           </table>
@@ -156,4 +162,10 @@
     <button class="btn btn-default" type="button" ng-click="ok()" ng-disabled='isSubmitting'>Submit</button>
     <button class="btn btn-default" type="button" ng-click="cancel()">Cancel</button>
   </div>
+</script>
+
+<script type="text/ng-template" id="codeModal.html">
+    <div class="modal-body">
+      <pre>{{srcCode}}</pre>
+    </div>
 </script>

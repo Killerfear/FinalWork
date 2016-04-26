@@ -1,3 +1,5 @@
+'use strict'
+
 var express = require('express');
 var router = express.Router();
 var co = require('co');
@@ -6,6 +8,7 @@ var _ = require('lodash');
 
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
+var OJ_RESULT = require('../lib/global').OJ_RESULT;
 var DB = require('../lib/mongoose-schema');
 
 const limit = 50;
@@ -17,7 +20,7 @@ router.get('/list/:page',  function(req, res, next) {
 
 		var promises = yield [
 														DB.Contest.find({ isHidden: false })
-																			.select("contestId title isPrivate startTime endTime")
+																			.select("-_id contestId title isPrivate startTime endTime")
 																			.sort("-startTime")
 																			.skip(skip)
 																			.limit(limit),
@@ -42,7 +45,7 @@ router.get('/show/:contestId', function(req, res, next) {
 		var contestId = req.params.contestId;
 
 		var contest = yield DB.Contest.findOne({ contestId: contestId })
-																	.select("-_id title startTime endTime problems authorizee");
+																	.select("-_id contestId title startTime endTime problems authorizee");
 
 		contest = contest.toObject();
 
@@ -57,13 +60,12 @@ router.get('/show/:contestId', function(req, res, next) {
 
 		if (curTime < contest.startTime) {
 			contest.isStart = false;
-			contest = _.pick("isStart");
+			contest = _.pick(contest, "isStart", "title", "startTime", "endTime");
+			console.log("this path");
 			return {
 				contest: contest
 			}
 		}
-
-
 
 		contest.isStart = true;
 
@@ -97,6 +99,72 @@ router.get('/problem', function(req, res, next) {
 	}));
 });
 
+
+//获取比赛排名
+router.get('/rank/:contestId', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var contest = yield DB.Contest.findOne({ contestId: req.params.contestId, isHidden: false })
+																	.select("-_id");
+
+	  if (!contest) throw { message: "比赛不存在" };
+
+		var solutions = yield DB.Solution.find({ contestId: req.params.contestId })
+																	   .select("-_id username result solutionId problemId submitTime")
+																		 .sort("-solutionId");
+
+		solutions = _.map(solutions, function(data) {
+			if (data.result > 2) {
+				if (OJ_RESULT[data.result] == "Accept") {
+					data.result = 3;
+				} else {
+					data.result = 4;
+				}
+			}
+
+			data.problemId = _.findIndex(contest.problems, function(problem) { return problem.problemId == data.problemId});
+			return data;
+		});
+
+		var result = _.reduce(solutions, function(result, solution) {
+			var user = solution.username;
+			var charId = solution.problemId;
+			if (!result[user]) result[user] = { penaty: 0, solved: 0 };
+			if (!result[user][charId]) result[user][charId] = {  wa: 0, wait: 0 };
+			if (solution.result  > 3) result[user][charId]['wa']++;
+			else if (solution.result <= 2) result[user][charId]['wait']++;
+			else {
+				result[user][charId]['ac'] = parseInt(solutions.submitTime / 1000 + 0.00000001);
+				result[user][charId]['wait'] = result[user][charId]['wa'] = 0;
+			}
+		}, {})
+
+		var ranklist = [];
+		for (var user in result) {
+			for (var id = 0; id < contest.problems.length; ++id) {
+				if (!result[user][id]) {
+					result[user][id] = {};
+				}
+				var info = result[user][id];
+				if (_.has(info, "ac")) {
+					++result[user].solved;
+					result[user].penaty += info.ac + 20 * 60 * info.wa;
+				}
+				info.wa += info.wait;
+				result[user][id] = _.omit(info, "wait");
+			}
+			result[user].username = user;
+			ranklist.push(result[user]);
+		}
+
+
+		ranklist = _.orderBy(ranklist, ['solved', 'penaty'], ['desc', 'asc'])
+
+
+		return {
+			ranklist: ranklist
+		}
+	}))
+})
 
 
 module.exports = router;

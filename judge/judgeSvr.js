@@ -6,7 +6,7 @@ var _ = require('lodash');
 var child_process = require('child_process');
 var fs = require('fs');
 var cluster = require('cluster');
-var numCPUs = 1;//require('os').cpus().length;
+var numCPUs = require('os').cpus().length;
 var mongo = require('../lib/mongo-extend');
 var DB = require('../lib/mongoose-schema');
 var judge = require('../judge/build/Release/judge');
@@ -40,9 +40,16 @@ var compile = function * (srcCode) {
 		maxBuffer: 100 * 1024, 	//100KB
 		encoding: "utf8"
 	};
+
 	return new Promise(function(resolve, reject) {
+			if (fs.existsSync("Main")) {
+				fs.unlinkSync("Main");
+			}
 			console.log("exec");
-			child_process.exec("g++ -Wall -Werror Main.cc -o Main -lm -O2 -DONLINE_JUDGE --static", function(err, stdout, stderr) {
+			child_process.exec("g++ -Wall -std=c++11 Main.cc -o  Main -lm -O2 -DONLINE_JUDGE --static", function(err, stdout, stderr) {
+				if (fs.existsSync("Main")) {
+					resolve("");
+				}
 				resolve(stderr);
 			});
 		});
@@ -80,6 +87,7 @@ if (cluster.isMaster) {
 	});
 } else {
 	//worker
+	require('../app.js');
 	var workDir = __dirname + "/run" + process.pid;
 	child_process.execSync("mkdir " + workDir);
 	process.chdir(workDir);
@@ -94,7 +102,7 @@ if (cluster.isMaster) {
 		console.log(submit);
 		var solution = yield DB.Solution.findOne({ solutionId: submit.solutionId });
 		solution.result = OJ_COMPILE;
-		//yield DB.Solution.findOneAndUpdate({ solutionId: submit.solutionId }, { result: OJ_COMPILE });
+
 		console.log("2");
 
 		var ce = yield [compile(submit.srcCode), solution.save()][0];
@@ -104,11 +112,10 @@ if (cluster.isMaster) {
 			solution.result = OJ_CE;
 			solution.error = ce;
 			yield solution.save();
-			//yield DB.Solution.findOneAndUpdate({ solutionId: submit.solutionId }, { result: OJ_CE, error: ce });
+
 		} else {
 			solution.result = OJ_RUNNING;
 			var wait = solution.save();
-			//DB.Solution.findOneAndUpdate({ solutionId: submit.solutionId }, { result: OJ_RUNNING });
 
 			console.log("Start Judging");
 			var judgeResult = judge.judge(workDir, fullPath, submit.memLimit, submit.timeLimit, submit.judgeType);

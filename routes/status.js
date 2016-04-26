@@ -17,9 +17,23 @@ var OJ_RESULT = require('../lib/global').OJ_RESULT;
 
 bluebird.promisifyAll(redis);
 
+router.get('/solution/:solutionId', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var solution = yield DB.Solution.findOne({ solutionId: req.params.solutionId })
+																  .select("result -_id memory time");
+		solution = solution.toObject();
+		solution.memory >>= 10;
+	  solution.resultText = OJ_RESULT[solution.result];
+		return {
+			pos: req.query.pos,
+			solution: solution
+		}
+	}))
+})
+
 router.get('/search/:page', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var query = _.pick(req.query, "username", "problemId", "result", "contestId");
+		var query = _.pick(req.query, "username", "problemId", "result", "contestId", "solutionId");
 
 		query = _.omitBy(query, function(data) {
 			return data.toString().length == 0;

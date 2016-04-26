@@ -165,7 +165,8 @@ function($scope, $rootScope, $http, $routeParams, $uibModal, $window) {
       size: size,
       resolve: {
         problemId: function() {  return $scope.problemId; },
-        contestId: function() { return null; }
+        contestId: function() { return null; },
+        problem: function() { return $scope.problem; }
       }
     });
 
@@ -177,7 +178,8 @@ function($scope, $rootScope, $http, $routeParams, $uibModal, $window) {
 });
 
 OJControllers.controller('submitModalCtrl',
-function($scope, $uibModalInstance, $http, problemId, contestId) {
+function($scope, $uibModalInstance, $http, problemId, contestId, problem) {
+  $scope.problem = problem;
   $scope.isSubmitting = false;
   console.log($scope);
   console.log(problemId);
@@ -211,10 +213,43 @@ function($scope, $uibModalInstance, $http, problemId, contestId) {
 });
 
 OJControllers.controller('statuslstCtrl',
-function($scope, $uibModal, $http, $rootScope, $location) {
+function($scope, $uibModal, $http, $rootScope, $location, $interval) {
+  $scope.search = {};
+  $scope.search.results = [
+    { text: "All" },
+    { text: "Pending", value: 0 },
+    { text: "Compiling", value: 1 },
+    { text: "Running", value: 2 },
+    { text: "Compile Error", value: 3 },
+    { text: "Runtime Error", value: 4 },
+    { text: "Memory Limit Exceed", value: 5 },
+    { text: "Time Limit Exceed", value: 6 },
+    { text: "Output Limit Exceed", value: 7 },
+    { text: "Accept", value: 8 },
+    { text: "Wrong Answer", value: 9 },
+    { text: "Presentation Error", value: 10 }
+  ]
+
   $scope.solutions = [];
   $rootScope.currentPage = 1;
   if (!$scope.query) $scope.query = $location.search();
+
+
+  $interval(function() {
+    for (var i in $scope.solutions) {
+      var solution = $scope.solutions[i];
+      if (solution.result <= 2) {
+        var url = new URI('/status/solution/' + solution.solutionId).addSearch({pos : i }).toString();
+        $http.get(url)
+             .success(function(data) {
+               $scope.solutions[data.pos] = _.assign($scope.solutions[data.pos], data.solution);
+             })
+             .error(function(err) {
+               alert("错误:" + err);
+             })
+      }
+    }
+  }, 1000);
 
   $scope.getItems = $rootScope.getItems = function() {
     var url = new URI('/status/search/' + $rootScope.currentPage).addSearch($scope.query).toString();
@@ -227,7 +262,7 @@ function($scope, $uibModal, $http, $rootScope, $location) {
         console.log($scope.solutions);
         $rootScope.totalItems = data.solutionCount;
       } else {
-        alert('失败:' + data.toString);
+        alert('失败:' + data.toString());
       }
     })
     .error(function(err) {
@@ -679,8 +714,25 @@ function($scope, $rootScope, $http) {
 
 
 OJControllers.controller('contestshowCtrl',
-function($scope, $rootScope, $http, $routeParams, $interval) {
+function($scope, $rootScope, $uibModal, $http, $routeParams, $interval) {
   var contestId = $routeParams.contestId;
+  $scope.search = {};
+  $scope.search.problems = [];
+  $scope.search.results = [
+    { text: "All"  },
+    { text: "Pending", value: 0 },
+    { text: "Compiling", value: 1 },
+    { text: "Running", value: 2 },
+    { text: "Compile Error", value: 3 },
+    { text: "Runtime Error", value: 4 },
+    { text: "Memory Limit Exceed", value: 5 },
+    { text: "Time Limit Exceed", value: 6 },
+    { text: "Output Limit Exceed", value: 7 },
+    { text: "Accept", value: 8 },
+    { text: "Wrong Answer", value: 9 },
+    { text: "Presentation Error", value: 10 }
+  ]
+
   $scope.activeTab = 0;
   $scope.contest = {};
   $scope.activeProblem = {};
@@ -691,10 +743,11 @@ function($scope, $rootScope, $http, $routeParams, $interval) {
        .success(function(data) {
          $scope.contest = data.contest;
          var problems = $scope.contest.problems;
+         $scope.search.problems = [ { text: "All" }];
          for (var i in problems) {
            var problem = problems[i];
-           console.log(i);
            problem.charId = String.fromCharCode(parseInt(i) + 65); //'A' + i
+           $scope.search.problems.push({ text: problem.charId, value: problem.problemId });
            if (i == 0) $scope.activeProblem = problem
          }
          $scope.currentTime = new Date().getTime();
@@ -727,13 +780,18 @@ function($scope, $rootScope, $http, $routeParams, $interval) {
    }
 
   $scope.open = function() {
+    if (new Date().getTime() >= $scope.contest.endTime) {
+      alert("Out of time");
+      return;
+    }
     var modalInstance = $uibModal.open({
       animation: true,
       templateUrl: 'submitModal.html',
       controller: 'submitModalCtrl',
       resolve: {
         problemId: function() {  return $scope.activeProblem.problemId; },
-        contestId: function() { return $scope.contest.contestId; }
+        contestId: function() { return $scope.contest.contestId; },
+        problem: function() { return $scope.activeProblem; }
       }
     });
 
@@ -743,15 +801,49 @@ function($scope, $rootScope, $http, $routeParams, $interval) {
 
   }
 
-  $scope.goToStatusList = function(problemId) {
-    $scope.activeTab = 2;
-    $scope.status.problemId = "";
+  $rootScope.getItems = function() {
+    if (!$rootScope.isLogin) return;
+    console.log($scope.status);
+    var query = { };
+    query.username = $rootScope.username;
+    query = _.assign(query, $scope.status);
+    query.contestId = $scope.contest.contestId;
+    console.log(query);
 
-    $scope.status.problemId = problemId;
+    var url = URI('/status/search/' + $rootScope.currentPage).addSearch(query).toString();
+
+    console.log(url);
+    $http.get(url)
+    .success(function(data) {
+      if (data.result == 'success') {
+        $scope = _.assign($scope, _.omit(data, "result"));
+        $scope.solutions = data.solutions;
+        console.log($scope.solutions);
+        $rootScope.totalItems = data.solutionCount;
+      } else {
+        alert('失败:' + data.toString());
+      }
+    })
+    .error(function(err) {
+      alert("错误:" + err);
+    })
   }
 
-  var getStatusList = function() {
+  $scope.goToStatusList = function(fromProblem) {
+    $scope.status = {};
+    if (fromProblem) {
+      $scope.status.problemId = $scope.activeProblem.problemId;
+    }
 
+    $rootScope.currentPage = 1;
+    $rootScope.getItems();
+    $scope.activeTab = 2;
+
+  }
+
+  var refreshStatus = function() {
+    $rootScope.currentPage = 1;
+    $rootScope.getItems();
   }
 
 
@@ -760,6 +852,40 @@ function($scope, $rootScope, $http, $routeParams, $interval) {
      if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
      else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
      else $scope.contest.status = 2;
+
+     if ($scope.activeTab == 2) {
+       //refresh
+       refreshStatus();
+     }
    }, 1000);
 
+   $scope.alert = function(obj) {
+     console.log(obj);
+     alert(obj.toString());
+   }
+
+   $scope.status = {};
+   $scope.status.problemId = -1;
+   $scope.status.result = -1;
+
+   $scope.getProblemCharId = function(problemId) {
+     var problem = _.find($scope.contest.problems, function(data) { return data.problemId == problemId });
+     return problem.charId;
+   }
+
+  $scope.showCode = function(solutionId) {
+    var modalInstance = $uibModal.open({
+      animation: true,
+      templateUrl: 'codeModal.html',
+      controller: 'codeModalCtrl',
+      resolve: {
+        solutionId: function() {  return solutionId; }
+      }
+    });
+
+    modalInstance.result.then(function () {
+      $scope.goToStatusList();
+    });
+
+  }
 });

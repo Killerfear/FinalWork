@@ -364,6 +364,15 @@ router.get('/contest/data', function(req, res, next) {
 		var contest = yield DB.Contest.findOne({ contestId: parseInt(req.query.contestId) })
 																	.select("-_id");
 		if (!contest) throw { message: "比赛不存在" };
+
+		contest = contest.toObject();
+		var problemId = [];
+		for (var i in contest.problems) {
+			problemId.push(contest.problems[i].problemId);
+		}
+
+		contest.problemId = problemId;
+		contest = _.omit(contest, "problems");
 		return {
 			contest: contest
 		}

@@ -97,7 +97,8 @@ router.post('/submit', function(req, res, next) {
 		var user = req.user;
 		var problemId = parseInt(req.body.problemId);
 		var contestId = null;
-		if (req.query.contestId) contestId = parseInt(req.query.contestId);
+		if (req.body.contestId) contestId = parseInt(req.body.contestId);
+		console.log(contestId);
 
 		var problem = yield DB.Problem.findOne({ problemId: problemId }, "-_id");
 		console.log('problem:', problem);
@@ -108,6 +109,7 @@ router.post('/submit', function(req, res, next) {
 			var contest = yield DB.Contest.findOne({ contestId: contestId, problemId: problemId });
 			if (!contest) throw { message: "题目不存在" }
 			if (contest.endTime <= new Date().getTime()) throw { message: "比赛结束" };
+			if (contest.startTime > new Date().getTime()) throw { message: "比赛未开始" };
 		}
 
 		var srcCode = req.body.srcCode;
@@ -123,11 +125,16 @@ router.post('/submit', function(req, res, next) {
 			result: 0
 		});
 
-		//console.log(solution);
+		console.log(solution);
 
 		user.submit.addToSet(problemId);
 
-		yield [ solution.save(), user.save(), redis.incrAsync('solutionCount') ];
+		yield solution.save();
+		console.log("solution save done!");
+		yield user.save();
+		console.log("user save done!");
+		yield redis.incrAsync('solutionCount');
+		console.log("after yield save()");
 
 		var judgeData = {
 			user: user,

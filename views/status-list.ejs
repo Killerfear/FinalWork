@@ -5,34 +5,38 @@
 <div class='container'>
   <table class='table'>
     <thead>
-      <th>#</th>
-      <th>User</th>
-      <th>Problem</th>
-      <th>Result</th>
-      <th>Memory</th>
-      <th>Time</th>
-      <th>Length</th>
-      <th>Submit Time</th>
+      <th class='text-center'>#</th>
+      <th class='col-md-2 text-center'>User</th>
+      <th class='col-md-1 text-center'>Problem</th>
+      <th class='col-md-2 text-center'>Result</th>
+      <th class='text-center'>Memory</th>
+      <th class='text-center'>Time</th>
+      <th class='text-center'>Length</th>
+      <th class='text-center'>Submit Time</th>
     </thead>
     <tbody>
       <tr>
         <td></td>
-        <td><input type='text' ng-model='query.username' ng-change='getItems()'></td>
-        <td><input type='text' ng-model='query.problemId' ng-change='getItems()'></td>
-        <td><input type='text' ng-model='query.result' ng-change='getItems()'></td>
+        <td><input class='form-control' type='text' ng-model='query.username' ng-change='getItems()'></td>
+        <td><input type='text' class='form-control' ng-model='query.problemId' ng-change='getItems()'></td>
+        <td>
+          <select class='form-control' style="" ng-model='query.result' ng-change='getItems()'
+            ng-options="result.value as result.text for result in search.results">
+          </select>
+        </td>
       </tr>
       <tr ng-repeat='solution in solutions'>
-        <td>{{solution.solutionId}}</td>
-        <td><a href="#">{{ solution.username }}</a></td>
-        <td><a href="/#/problem/show/{{ solution.problemId }}">{{ solution.problemId }}</a></td>
-        <td>{{ solution.resultText }}</td>
-        <td><span ng-show="solution.result > 3">{{ solution.memory }} KB</span></td>
-        <td><span ng-show="solution.result > 3">{{ solution.time }} MS</span></td>
-        <td>
+        <td class='text-center'>{{solution.solutionId}}</td>
+        <td class='text-center'><a href="#">{{ solution.username }}</a></td>
+        <td class='text-center'><a href="/#/problem/show/{{ solution.problemId }}">{{ solution.problemId }}</a></td>
+        <td class='text-center'>{{ solution.resultText }}</td>
+        <td class='text-center'><span ng-show="solution.result > 3">{{ solution.memory }} KB</span></td>
+        <td class='text-center'><span ng-show="solution.result > 3">{{ solution.time }} MS</span></td>
+        <td class='text-center'>
           <a href="javascript:void(0);" ng-show='solution.username == username' ng-click='showCode(solution.solutionId)'>{{ solution.codeLength }} B</a>
           <span ng-hide='solution.username == username'>{{solution.codeLength}} B</span>
         </td>
-        <td>{{ solution.submitTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+        <td class='text-center'>{{ solution.submitTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
       </tr>
     </tbody>
   </table>

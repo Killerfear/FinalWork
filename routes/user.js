@@ -100,8 +100,8 @@ router.post('/signup', function(req, res, next) {
 //获取个人信息
 router.get('/data', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-
-		return _.omit(req.user.toObject(), "salt", "password", "ip");
+		var user = req.user ? req.user.toObject() : {};
+		return _.omit(user, "salt", "password", "ip");
 	}));
 });
 

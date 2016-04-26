@@ -6,7 +6,7 @@ var bcrypt = require('bcrypt');
 
 
 exports.getByName = co.wrap(function * (name) {
-	return yield db.User.findOne({ username: name }, "-_id");
+	return yield db.User.findOne({ username: name });
 });
 
 exports.authenticate = co.wrap(function*(name, pass) {

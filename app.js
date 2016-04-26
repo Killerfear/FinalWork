@@ -9,6 +9,8 @@ var redisStore = require('connect-redis')(session);
 var csrf = require('csurf');
 var ejs = require('ejs');
 
+var process = require('process');
+
 
 var routes = require('./routes/index');
 var user = require('./routes/user');
@@ -95,5 +97,5 @@ app.use(function(err, req, res, next) {
 module.exports = app;
 
 app.listen(80, function() {
-	console.log("Server is listening");
+	console.log("pid[" + process.pid + "]" + " Server is listening");
 });
