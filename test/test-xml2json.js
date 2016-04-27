@@ -12,22 +12,25 @@ bluebird.promisifyAll(fs);
 bluebird.promisifyAll(xml2js);
 bluebird.promisifyAll(http);
 
+const addProblem = 0;
+const addData = 1;
+const mode = addData;
 /*
- * [ 'title',
- *   'time_limit',
- *   'memory_limit',
- *   'description',
- *   'input',
- *   'output',
- *   'sample_input',
- *   'sample_output',
- *   'test_input',
- *   'test_output',
- *   'hint',
- *   'source',
- *   'solution' ]
- *
- */
+* [ 'title',
+*   'time_limit',
+*   'memory_limit',
+*   'description',
+*   'input',
+*   'output',
+*   'sample_input',
+*   'sample_output',
+*   'test_input',
+*   'test_output',
+*   'hint',
+*   'source',
+*   'solution' ]
+*
+*/
 var AddProblem = co.wrap(function * (problem) {
 	return new Promise(function(resolve, reject) {
 
@@ -47,6 +50,7 @@ var AddProblem = co.wrap(function * (problem) {
 		var options = {
 			path: "/admin/problem/add",
 			method: "POST",
+			port: 8080,
 
 			headers: {
 				"Host": "localhost",
@@ -71,7 +75,7 @@ var AddProblem = co.wrap(function * (problem) {
 			res.on('end', function() {
 				//console.log(resData);
 				var data = JSON.parse(resData);
-					resolve(data);
+				resolve(data);
 			});
 		});
 
@@ -85,7 +89,7 @@ co(function * () {
 	for (var i in files) {
 		var file = files[i];
 		if (!file.match(/problem*/)) continue;
-//		if (file != "problem1097") continue;
+		//		if (file != "problem1097") continue;
 		var xml = yield fs.readFileAsync('../../parseProblem/' + file, "utf8");
 
 		var js = yield xml2js.parseStringAsync(xml, { ignoreAttrs : true, explicitArray: false  });
@@ -95,39 +99,42 @@ co(function * () {
 		if (js.spj) continue;
 
 		console.log("Add Problem", file);
-	//	AddProblem(js);
+		if (mode == addProblem) {
+			AddProblem(js);
+		} else {
 
-		if (!js.test_input || !js.test_output) continue;
-		var dataIn = [], dataOut = [];
-		if (typeof js.test_input != 'object') dataIn.push(js.test_input);
-		else dataIn = js.test_input;
+			if (!js.test_input || !js.test_output) continue;
+			var dataIn = [], dataOut = [];
+			if (typeof js.test_input != 'object') dataIn.push(js.test_input);
+			else dataIn = js.test_input;
 
-		if (typeof js.test_output != 'object') dataOut.push(js.test_output);
-		else dataOut = js.test_output;
+			if (typeof js.test_output != 'object') dataOut.push(js.test_output);
+			else dataOut = js.test_output;
 
-		var problem = yield DB.Problem.findOne({ title : js.title });
+			var problem = yield DB.Problem.findOne({ title : js.title });
 
-		if (!problem) {
-			console.log("Problem", js.title, " not found");
-			continue;
-		}
+			if (!problem) {
+				console.log("Problem", js.title, " not found");
+				continue;
+			}
 
-		if (dataIn.length != dataOut.length) {
-			console.log("Problem", js.title, " data number not coincident");
-			continue;
-		}
+			if (dataIn.length != dataOut.length) {
+				console.log("Problem", js.title, " data number not coincident");
+				continue;
+			}
 
 
 
-		var filePath = path.join(__dirname, "../problem/", problem.problemId.toString());
+			var filePath = path.join(__dirname, "../problem/", problem.problemId.toString());
 
-		for (var i in dataIn) {
-			var inTxt = dataIn[i];
-			var outTxt = dataOut[i];
-			yield [
-						fs.writeFileAsync(path.join(filePath, "data" + i + ".in"), inTxt),
-				  	fs.writeFileAsync(path.join(filePath, "data" + i + ".out"), outTxt)
-				  ]
+			for (var i in dataIn) {
+				var inTxt = dataIn[i];
+				var outTxt = dataOut[i];
+				yield [
+					fs.writeFileAsync(path.join(filePath, "data" + i + ".in"), inTxt),
+					fs.writeFileAsync(path.join(filePath, "data" + i + ".out"), outTxt)
+				]
+			}
 		}
 
 		console.log("Add Problem", file, " Done!");
