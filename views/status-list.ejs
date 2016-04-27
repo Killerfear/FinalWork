@@ -1,41 +1,86 @@
-<div ng-include="'/views/navbar.ejs'"> </div>
+<style media="screen">
+.spinner {
+  width: 15px;
+  height: 15px;
+  margin: 0px auto;
+  background-color: #333;
 
-<div ng-include="'/views/pagination.ejs'"></div>
+  border-radius: 100%;
+  -webkit-animation: sk-scaleout 1.0s infinite ease-in-out;
+  animation: sk-scaleout 1.0s infinite ease-in-out;
+}
 
-<div class='container'>
-  <table class='table'>
-    <thead>
-      <th class='text-center'>#</th>
-      <th class='col-md-2 text-center'>User</th>
-      <th class='col-md-1 text-center'>Problem</th>
-      <th class='col-md-2 text-center'>Result</th>
-      <th class='text-center'>Memory</th>
-      <th class='text-center'>Time</th>
-      <th class='text-center'>Length</th>
-      <th class='text-center'>Submit Time</th>
-    </thead>
-    <tbody>
-      <tr>
-        <td></td>
-        <td><input class='form-control' type='text' ng-model='query.username' ng-change='getItems()'></td>
-        <td><input type='text' class='form-control' ng-model='query.problemId' ng-change='getItems()'></td>
-        <td>
-          <select class='form-control' style="" ng-model='query.result' ng-change='getItems()'
-            ng-options="result.value as result.text for result in search.results">
-          </select>
-        </td>
-      </tr>
-      <tr ng-repeat='solution in solutions'>
-        <td class='text-center'>{{solution.solutionId}}</td>
-        <td class='text-center'><a href="#">{{ solution.username }}</a></td>
-        <td class='text-center'><a href="/#/problem/show/{{ solution.problemId }}">{{ solution.problemId }}</a></td>
-        <td class='text-center' ng-class="{'text-success' : solution.result==8, 'text-danger': solution.result!=8}">
-          <a href='javascript:void(0);' ng-click=showCE(solution.solutionId) ng-show="solution.result==3">
-            {{ solution.resultText }}
-          </a>
-          <span ng-hide="solution.result==3" style="font-weight:bold;">
-            {{ solution.resultText }}
-          </span>
+@-webkit-keyframes sk-scaleout {
+  0% { -webkit-transform: scale(0) }
+  100% {
+    -webkit-transform: scale(1.0);
+    opacity: 0;
+  }
+}
+
+@keyframes sk-scaleout {
+  0% {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+    } 100% {
+      -webkit-transform: scale(1.0);
+      transform: scale(1.0);
+      opacity: 0;
+    }
+  }
+
+  </style>
+
+
+
+
+  <div ng-include="'/views/navbar.ejs'"> </div>
+
+  <div ng-include="'/views/pagination.ejs'"></div>
+
+  <div class='container'>
+    <div class='text-center text-nowrap'>
+      <table class='table'>
+        <thead>
+          <th class='text-center'>#</th>
+          <th class='col-md-2 text-center'>User</th>
+          <th class='col-md-1 text-center'>Problem</th>
+          <th style="width:15px;"></th>
+          <th class='col-md-2 text-center'>Result</th>
+          <th class='text-center'>Memory</th>
+          <th class='text-center'>Time</th>
+          <th class='text-center'>Length</th>
+          <th class='text-center'>Submit Time</th>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td><input class='form-control' type='text' ng-model='query.username' ng-change='getItems()'></td>
+            <td><input type='text' class='form-control' ng-model='query.problemId' ng-change='getItems()'></td>
+            <td></td>
+            <td>
+              <select class='form-control' style="" ng-model='query.result' ng-change='getItems()'
+              ng-options="result.value as result.text for result in search.results">
+            </select>
+          </td>
+        </tr>
+        <tr ng-repeat='solution in solutions'>
+          <td class='text-center'>{{solution.solutionId}}</td>
+          <td class='text-center'><a href="#">{{ solution.username }}</a></td>
+          <td class='text-center'><a href="/#/problem/show/{{ solution.problemId }}">{{ solution.problemId }}</a></td>
+          <td>
+            <div class="spinner" ng-show="solution.result <= 2"></div>
+          </td>
+          <td class='text-center text-nowrap'
+          ng-class="{'text-success' : solution.result==8, 'text-muted': solution.result <= 2, 'text-danger': solution.result!=8 && solution.result > 2 }">
+          <div class='text-center'>
+            <a href='javascript:void(0);' ng-click=showCE(solution.solutionId) ng-show="solution.result==3">
+              {{ solution.resultText }}
+            </a>
+            <span ng-hide="solution.result==3" style="font-weight:bold;">
+              {{ solution.resultText }}
+            </span>
+          </div>
         </td>
         <td class='text-center'><span ng-show="solution.result > 3">{{ solution.memory }} KB</span></td>
         <td class='text-center'><span ng-show="solution.result > 3">{{ solution.time }} MS</span></td>
@@ -47,16 +92,17 @@
       </tr>
     </tbody>
   </table>
+</div>
 
-  <script type="text/ng-template" id="codeModal.html">
-      <div class="modal-body">
-        <pre>{{srcCode}}</pre>
-      </div>
-  </script>
+<script type="text/ng-template" id="codeModal.html">
+<div class="modal-body">
+<pre>{{srcCode}}</pre>
+</div>
+</script>
 
-  <script type="text/ng-template" id="ceInfoModal.html">
-      <div class="modal-body">
-        <pre>{{text}}</pre>
-      </div>
-  </script>
+<script type="text/ng-template" id="ceInfoModal.html">
+<div class="modal-body">
+<pre>{{text}}</pre>
+</div>
+</script>
 </div>
