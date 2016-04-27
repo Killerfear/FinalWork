@@ -172,7 +172,8 @@ function($scope, $rootScope, $http, $routeParams, $uibModal, $window) {
     });
 
     modalInstance.result.then(function () {
-      $scope.goToStatusList();
+      $window.location.href = '/#/status/list?username=' + $rootScope.username;
+      //$scope.goToStatusList();
     });
 
   }
@@ -236,7 +237,7 @@ function($scope, $uibModal, $http, $rootScope, $location, $interval) {
   if (!$scope.query) $scope.query = $location.search();
 
 
-  $interval(function() {
+  var autoRefresh = $interval(function() {
     for (var i in $scope.solutions) {
       var solution = $scope.solutions[i];
       if (solution.result <= 2) {
@@ -250,7 +251,8 @@ function($scope, $uibModal, $http, $rootScope, $location, $interval) {
         })
       }
     }
-  }, 1000);
+  }, 1500);
+  $scope.$on('$destroy', function() { $interval.cancel(autoRefresh); });
 
   $scope.getItems = $rootScope.getItems = function() {
     var url = new URI('/status/search/' + $rootScope.currentPage).addSearch($scope.query).toString();
@@ -877,7 +879,7 @@ function($scope, $rootScope, $uibModal, $http, $routeParams, $interval) {
   }
 
 
-  $interval(function() {
+  var autoRefresh = $interval(function() {
     $scope.currentTime = new Date().getTime();
     if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
     else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
@@ -887,7 +889,9 @@ function($scope, $rootScope, $uibModal, $http, $routeParams, $interval) {
       //refresh
       refreshStatus();
     }
-  }, 1000);
+  }, 1500);
+
+  $scope.$on('$destroy', function() { $interval.cancel(autoRefresh); });
 
   $scope.alert = function(obj) {
     console.log(obj);

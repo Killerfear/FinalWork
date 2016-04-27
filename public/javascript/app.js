@@ -1,12 +1,14 @@
 
 
 var OJApp = angular.module('OJApp', [
+  'ngAnimate',
+  'angular-loading-bar',
   "ui.bootstrap",
   'ngRoute',
   'ngSanitize',
   'OJControllers',
   'OJDirective',
-  'ui.bootstrap.datetimepicker'
+  'ui.bootstrap.datetimepicker',
 ]);
 
 
