@@ -346,6 +346,21 @@ router.put('/contest', function(req, res, next) {
 router.post('/contest/data',function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var contest = req.body.contest;
+		if (contest.startTime > contest.endTime) throw { message: "开始时间比结束时间晚" };
+		if (contest.startTime < 0) throw { message : "开始时间范围不对" };
+
+		var problemIds = req.body.contest.problemId;
+		if (problemIds.length > 26) throw { message: "题目数量超过限制" };
+
+		contest.problems = [];
+
+		for (var i in problemIds) {
+			var problemId = problemIds[i];
+			var problem = yield DB.Problem.findOne({ problemId: problemId }, "-_id -isHidden");
+			if (!problem) throw { message: "题目 " + problemId + " 不存在" }
+			contest.problems.push(problem);
+		}
+
 		var doc = yield DB.Contest.findOneAndUpdate({ contestId: contest.contestId }, contest);
 		if (!doc) throw { message: "比赛不存在" };
 		return {};
