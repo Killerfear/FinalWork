@@ -8,8 +8,10 @@ var bodyParser = require('body-parser');
 var redisStore = require('connect-redis')(session);
 var csrf = require('csurf');
 var ejs = require('ejs');
-
+var cluster = require('cluster');
+var child_process = require('child_process');
 var process = require('process');
+var numCPUs = require('os').cpus().length;
 
 
 var routes = require('./routes/index');
@@ -18,6 +20,8 @@ var problemset = require('./routes/problem');
 var status = require('./routes/status');
 var contest = require('./routes/contest');
 var admin = require('./routes/admin');
+
+
 
 var app = express();
 
@@ -31,9 +35,9 @@ app.set('view engine', 'ejs');
 var hour = 60 * 60 * 1000;
 
 app.use(logger('dev'));
-app.use(bodyParser.json({limit : 5 * 1024 * 1024} /*32kb}*/));
-app.use(bodyParser.urlencoded({ extended: false,limit : 5 * 1024 * 1024 }));
-app.use(bodyParser.raw({ limit : 5 * 1024 * 1024 }));
+app.use(bodyParser.json({limit : 2 * 1024 * 1024} /*32kb}*/));
+app.use(bodyParser.urlencoded({ extended: false,limit : 2 * 1024 * 1024 }));
+app.use(bodyParser.raw({ limit : 2 * 1024 * 1024 }));
 app.use(cookieParser('oiwejopepw;'));
 app.use(session({
 	secret: 'randomstr',
@@ -96,6 +100,13 @@ app.use(function(err, req, res, next) {
 
 module.exports = app;
 
-app.listen(80, function() {
-	console.log("pid[" + process.pid + "]" + " Server is listening");
-});
+if (cluster.isMaster) {
+	for (var i = 0; i < numCPUs; ++i) {
+		cluster.fork();
+	}
+
+} else if (cluster.isWorker) {
+	app.listen(8000, function() {
+		console.log("pid[" + process.pid + "]" + " Server is listening");
+	});
+}
