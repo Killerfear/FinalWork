@@ -41,7 +41,7 @@ router.get('/list/:page',  function(req, res, next) {
 //获取某一个比赛的Overview
 router.get('/show/:contestId', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
+		var user = req.user || {};
 
 		var contestId = req.params.contestId;
 
@@ -81,7 +81,7 @@ router.get('/show/:contestId', function(req, res, next) {
 //获取比赛题目描述
 router.get('/problem', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
+		var user = req.user || {};
 		//contestId, problemId,
 		var contestId = req.query.contestId;
 		var problemId = parseInt(req.query.problemId);

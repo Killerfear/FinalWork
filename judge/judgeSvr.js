@@ -59,7 +59,8 @@ if (cluster.isMaster) {
 	//master
 
 	process.chdir(__dirname);
-	child_process.execSync("./clean.sh");
+	console.log(__dirname);
+	child_process.execSync("rm -rf run*");
 
 	var workers = [];
 	for (var i = 0; i < numCPUs; ++i) {

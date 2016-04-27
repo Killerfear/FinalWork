@@ -110,6 +110,8 @@ router.post('/profile', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 
+		if (!user) throw { message: "未登录" }
+
 		var setter = _.pick(req.body, 'nickname', 'email', 'gender');
 
 		user = _.extend(user, setter);

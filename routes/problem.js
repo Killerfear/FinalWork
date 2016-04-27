@@ -43,21 +43,23 @@ router.get('/list/:page', function(req, res, next) {
     var problems = promises[0];
 		var problemCount = promises[1];
 
-		var solved = user.solved || [];
-		var unsolved = _.difference(user.submit || [], solved);
+		if (user) {
+			var solved = user.solved || [];
+			var unsolved = _.difference(user.submit || [], solved);
 
-		solved.sort();
-		unsolved.sort();
+			solved.sort();
+			unsolved.sort();
 
-		var j = 0, k = 0;
-		for (var i in problems) {
-			var problem = problems[i];
-			while (j < solved.length && solved[j] < problem.problemId) ++j;
-			while (k < unsolved.length && unsolved[k] < problem.problemId) ++k;
+			var j = 0, k = 0;
+			for (var i in problems) {
+				var problem = problems[i];
+				while (j < solved.length && solved[j] < problem.problemId) ++j;
+				while (k < unsolved.length && unsolved[k] < problem.problemId) ++k;
 
-			if (j < solved.length && solved[j] == problem.problemId) problem.state = 1;
-			else if (k < unsolved.length && unsolved[k] == problem.problemId) problem.state = 2;
-			else problem.state = 0;
+				if (j < solved.length && solved[j] == problem.problemId) problem.state = 1;
+				else if (k < unsolved.length && unsolved[k] == problem.problemId) problem.state = 2;
+				else problem.state = 0;
+			}
 		}
 
 
@@ -72,7 +74,7 @@ router.get('/list/:page', function(req, res, next) {
 //获取题目描述
 router.get('/data/:problemId', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
+		var user = req.user || {};
 		console.log(user);
 		var problemId = req.params.problemId;
 		console.log(problemId)
@@ -94,7 +96,7 @@ router.get('/data/:problemId', function(req, res, next) {
 router.post('/submit', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		console.log('zzz');
-		var user = req.user;
+		var user = req.user || {};
 		var problemId = parseInt(req.body.problemId);
 		var contestId = null;
 		if (req.body.contestId) contestId = parseInt(req.body.contestId);

@@ -54,7 +54,6 @@ router.get('/search/:page', function(req, res, next) {
 
 		var solutions = promises[0];
 		var solutionCount = promises[1];
-		var user = req.user;
 		for (var i in solutions) {
 			var solution = solutions[i] = solutions[i].toObject();
 			solution.resultText = OJ_RESULT[solution.result];
@@ -73,12 +72,12 @@ router.get('/search/:page', function(req, res, next) {
 
 router.get('/code/:solutionId', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
+		var user = req.user || {};
 		var solutionId = parseInt(req.params.solutionId);
 		var solution = yield DB.Solution.findOne({solutionId: solutionId})
 																		.select("srcCode username");
 	  var srcCode = "";
-		if (solution && user.username && solution.username == user.username) {
+		if (solution && (user.isAdmin || (user.username && solution.username == user.username))) {
 			srcCode = solution.srcCode;
 		}
 
@@ -90,12 +89,12 @@ router.get('/code/:solutionId', function(req, res, next) {
 
 router.get('/ce/:solutionId', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
+		var user = req.user || {};
 		var solutionId = req.params.solutionId;
 		var solution = yield DB.Solution.findOne({solutionId: solutionId})
 																		.select("-_id error username");
 	  var ce = "";
-		if (solution && user.username && solution.username == user.username) {
+		if (solution && (user.isAdmin || (user.username && solution.username == user.username))) {
 			ce = solution.error;
 		}
 
