@@ -1,3 +1,37 @@
+
+<style media="screen">
+.spinner {
+  width: 15px;
+  height: 15px;
+  margin: 0px auto;
+  background-color: #333;
+
+  border-radius: 100%;
+  -webkit-animation: sk-scaleout 1.0s infinite ease-in-out;
+  animation: sk-scaleout 1.0s infinite ease-in-out;
+}
+
+@-webkit-keyframes sk-scaleout {
+  0% { -webkit-transform: scale(0) }
+  100% {
+    -webkit-transform: scale(1.0);
+    opacity: 0;
+  }
+}
+
+@keyframes sk-scaleout {
+  0% {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+    } 100% {
+      -webkit-transform: scale(1.0);
+      transform: scale(1.0);
+      opacity: 0;
+    }
+  }
+
+  </style>
+
 <div ng-include="'/views/navbar.ejs'"> </div>
 
 <div class='container'>
@@ -96,6 +130,7 @@
           <table class='table'>
             <thead>
               <th class='col-md-1 text-center'>Problem</th>
+              <th style="width:15px"></th>
               <th class='col-md-2 text-center'>Result</th>
               <th class='col-md-2 text-center'>Memory</th>
               <th class='col-md-2 text-center'>Time</th>
@@ -108,6 +143,7 @@
                   <select class="form-control" ng-model="status.problemId" ng-options="problem.value as problem.text for problem in search.problems" ng-change="refreshStatus()">
                   </select>
                 </td>
+                <td></td>
 
                 <td>
                   <select class="form-control" ng-model="status.result" ng-options="result.value as result.text for result in search.results" ng-change="refreshStatus()">
@@ -122,7 +158,10 @@
                     {{ getProblemCharId(solution.problemId) }}
                   </a>
                 </td>
-                <td class='text-center'>
+                <td>
+                  <div class='spinner' ng-show="solution.result <= 2"></div>
+                </td>
+                <td class='text-center' ng-class="{'text-success' : solution.result==8, 'text-muted': solution.result <= 2, 'text-danger': solution.result!=8 && solution.result > 2 }">
                   <a href='javascript:void(0);' ng-click=showCE(solution.solutionId) ng-show="solution.result==3">
                     {{ solution.resultText }}
                   </a>
@@ -145,15 +184,15 @@
       </uib-tab>
       <uib-tab heading='Rank' ng-show="contest.isStart" ng-click='getRanklist()'>
         <div class='text-center text-nowrap'>
-          <div class='table-responsive'>
-            <table class='table table-bordered' style=".table *{vertical-align:middle;text-align:center}">
+          <div class='table-responsive' style='width:{{70*contest.problems.length}}px;'>
+            <table class='table table-bordered' data-show-columns='true' style=".table *{vertical-align:middle;text-align:center}">
               <thead >
                 <th>#</th>
-                <th>Name</th>
-                <th>Nick</th>
-                <th>Solved</th>
-                <th>Penalty</th>
-                <th ng-repeat="problem in contest.problems" class='col-md-2 text-center'>
+                <th style="width:50px;">Name</th>
+                <th style="width:50px;">Nick</th>
+                <th style="width:30px;">Solved</th>
+                <th style="width:30px;">Penalty</th>
+                <th ng-repeat="problem in contest.problems" class='text-center' >
                   <a href="javascript:void(0);" ng-click="chooseProblem(problem.charId)">{{problem.charId}}</a>
                 </th>
               </thead>
