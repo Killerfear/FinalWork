@@ -1,2 +1,4 @@
 node_modules/
 judge/run*
+problem/
+.gitignore
