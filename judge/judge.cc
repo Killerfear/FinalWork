@@ -206,9 +206,9 @@ void runSolution(const string & workDir, int & timeLimit, int & usedtime, int & 
 	assert(chroot(workDir.c_str()) == 0);
 	puts("chroot...");
 
-	//while(setgid(65534)!=0) sleep(1);
-	//while(setuid(65534)!=0) sleep(1);
-	//while(setresuid(65534, 65534, 65534)!=0) sleep(1);
+	while(setgid(65534)!=0) sleep(1);
+	while(setuid(65534)!=0) sleep(1);
+	while(setresuid(65534, 65534, 65534)!=0) sleep(1);
 
 	// child
 	// set the limit
