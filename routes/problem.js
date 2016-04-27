@@ -96,7 +96,10 @@ router.get('/data/:problemId', function(req, res, next) {
 router.post('/submit', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		console.log('zzz');
-		var user = req.user || {};
+		var user = req.user;
+		if (!user) {
+			throw { message: "未登录" };
+		}
 		var problemId = parseInt(req.body.problemId);
 		var contestId = null;
 		if (req.body.contestId) contestId = parseInt(req.body.contestId);

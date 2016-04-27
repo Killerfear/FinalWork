@@ -108,7 +108,7 @@ router.post("/problem/add", function(req, res, next) {
 
 		var filePath = path.join(__dirname, "../problem/", id.toString());
 
-		yield fs.mkdirAsync(filePath, 600);
+		yield fs.mkdirAsync(filePath);
 
 		yield [
 			fs.writeFileAsync(filePath + "/sample.in", sampleInput, "utf-8"),

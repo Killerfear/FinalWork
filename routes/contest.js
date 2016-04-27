@@ -78,26 +78,6 @@ router.get('/show/:contestId', function(req, res, next) {
 	}));
 });
 
-//获取比赛题目描述
-router.get('/problem', function(req, res, next) {
-	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user || {};
-		//contestId, problemId,
-		var contestId = req.query.contestId;
-		var problemId = parseInt(req.query.problemId);
-		var contest = yield mongo.find("Contest", { _id: ObjectID(contestId), problems: problemId });
-
-		if (!contest || contest.isHidden) throw { message: "不存在该比赛或该比赛不存在该题目" };
-		if (contest.isPrivate && !_.contains(contest.authorizee, user._id)) throw { message: "该比赛是私有的" };
-
-		var curTime = new Date().getTime();
-		if (curTime < contest.startTime) throw { message: "比赛未开始" }
-
-		var problem = yield mongo.find('Problem', { _id: problemId });
-
-		return { title : contest };
-	}));
-});
 
 
 //获取比赛排名

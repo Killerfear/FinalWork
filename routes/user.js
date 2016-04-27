@@ -123,11 +123,16 @@ router.post('/profile', function(req, res, next) {
 //修改密码
 router.post('/profile/password', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var user = req.user;
+
+		if (!user) {
+			throw { message: "未登录" };
+		}
+
 		var body = req.body;
 
 		if (body.newPass != body.newRepPass) throw { message: "密码不一致" }
 
-		var user = req.user;
 
 		var haxiPass = yield bcrypt.hash(body.oldPass, user.salt);
 

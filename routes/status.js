@@ -72,7 +72,11 @@ router.get('/search/:page', function(req, res, next) {
 
 router.get('/code/:solutionId', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user || {};
+		var user = req.user;
+		if (!user) {
+			throw { message: "未登录" };
+		}
+
 		var solutionId = parseInt(req.params.solutionId);
 		var solution = yield DB.Solution.findOne({solutionId: solutionId})
 																		.select("srcCode username");
@@ -89,7 +93,10 @@ router.get('/code/:solutionId', function(req, res, next) {
 
 router.get('/ce/:solutionId', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user || {};
+		var user = req.user;
+		if (!user) {
+			throw { message: "未登录" };
+		}
 		var solutionId = req.params.solutionId;
 		var solution = yield DB.Solution.findOne({solutionId: solutionId})
 																		.select("-_id error username");
