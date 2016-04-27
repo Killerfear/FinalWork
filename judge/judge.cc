@@ -192,17 +192,13 @@ void prepareFiles(const char * filename, int namelen, const string & fullPath, c
 
 void runSolution(const string & workDir, int & timeLimit, int & usedtime, int & memLimit)
 {
-	puts("1");
 	assert(nice(19) != -1);
 	// now the user is "judger"
-	puts("2");
 	assert(chdir(workDir.c_str()) == 0);
-	puts("3");
 	// open the files
 	assert(freopen("data.in", "r", stdin) != NULL);
 	assert(freopen("user.out", "w", stdout) != NULL);
 	assert(freopen("error.out", "a+", stderr) != NULL);
-	puts("4");
 	// trace me
 	puts("ptrace...");
 	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
@@ -210,9 +206,9 @@ void runSolution(const string & workDir, int & timeLimit, int & usedtime, int & 
 	assert(chroot(workDir.c_str()) == 0);
 	puts("chroot...");
 
-	while(setgid(65534)!=0) sleep(1);
-	while(setuid(65534)!=0) sleep(1);
-	while(setresuid(65534, 65534, 65534)!=0) sleep(1);
+	//while(setgid(65534)!=0) sleep(1);
+	//while(setuid(65534)!=0) sleep(1);
+	//while(setresuid(65534, 65534, 65534)!=0) sleep(1);
 
 	// child
 	// set the limit
@@ -255,6 +251,7 @@ void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int isspj,
 		int & usedtime, int timeLimit, int & PEflg, const string & workDir)
 {
 	// parent
+	printf("Watch pid[%d]\n", pidApp);
 	int tempmemory;
 	int sub_level=0;
 
@@ -275,6 +272,7 @@ void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int isspj,
 			topmemory = tempmemory;
 		if (topmemory > memLimit * STD_MB)
 		{
+			printf("MLE: %d\n", __LINE__);
 			if (ACflg == OJ_AC)
 				ACflg = OJ_MLE;
 			ptrace(PTRACE_KILL, pidApp, NULL, NULL);
@@ -413,7 +411,7 @@ WSTOPSIG: get the signal if it was stopped by signal
 					if(subpid>0&&subpid!=subwatcher)
 					{
 						//ptrace(PTRACE_ATTACH, subpid,               NULL, NULL);
-						//wait(NULL);
+							//wait(NULL);
 
 						subwatcher=fork();
 						if(subwatcher==0)
@@ -523,7 +521,10 @@ void judgeSolution(int & ACflg, int & usedtime, int timeLimit, int isspj,
 	int comp_res = -1;
 	if (ACflg == OJ_AC && usedtime > timeLimit * 1000 * 2)
 		ACflg = OJ_TLE;
-	if(topmemory > memLimit * STD_MB) ACflg=OJ_MLE; //issues79
+	if(topmemory > memLimit * STD_MB) {
+		ACflg=OJ_MLE; //issues79
+		printf("MLE: %d\n", __LINE__);
+	}
 	// compare
 	if (ACflg == OJ_AC)
 	{
@@ -591,6 +592,7 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 
 		if (pidApp == 0)
 		{
+			//exit(0) in runSolution
 			runSolution(workDir, timeLimit, usedtime, memLimit);
 		}
 		else
@@ -607,7 +609,6 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 				max_case_time=usedtime>max_case_time?usedtime:max_case_time;
 				usedtime=0;
 			}
-			printf("wwww");
 			//clean_session(pidApp);
 		}
 	}
@@ -631,7 +632,7 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 	printf("%d\n", ACflg);
 
 
-	//usedtime(ms), topmemory(b), Acflg, 
+	//usedtime(ms), topmemory(b), Acflg,
 
 	Local<Object> judgeResult = Object::New(isolate);
 	judgeResult->Set(String::NewFromUtf8(isolate, "time"), Number::New(isolate, usedtime));

@@ -72,27 +72,32 @@ if (cluster.isMaster) {
 		console.log("connected....");
 		socket.on('judge', function (submit) {
 			console.log("judging....");
-			var worker = _.min(workers, function(data) { return data.used; });
+			var worker = _.minBy(workers, function(data) { return data.used; });
+			//console.log(worker);
 			++worker.used;
 			worker.worker.send(submit);
 		});
 	});
 
 	cluster.on('message', function(resp) {
-		var pid = resp.pid;
-		console.log(pid, ":", "finish");
-		console.log(workers);
-		var worker = _.find(workers, function(data) { return data.worker.process.pid == pid; });
-		--worker.used;
+		if (resp.pid) {
+			var pid = resp.pid;
+			console.log(pid, ":", "finish");
+			//console.log(workers);
+			var worker = _.find(workers, function(data) { return data.worker.process.pid == pid; });
+			--worker.used;
+		}
 	});
 } else {
 	//worker
-	require('../app.js');
+	//require('../app.js');
 	var workDir = __dirname + "/run" + process.pid;
 	child_process.execSync("mkdir " + workDir);
 	process.chdir(workDir);
 
 	process.on('message', co.wrap(function * (submit) {
+		child_process.execSync("rm -f Main data.in error.out Main.cc user.out");
+
 		var fullPath = __dirname + "/../problem/" + submit.problemId;
 		var user = submit.user;
 
@@ -115,7 +120,7 @@ if (cluster.isMaster) {
 
 		} else {
 			solution.result = OJ_RUNNING;
-			var wait = solution.save();
+			yield solution.save();
 
 			console.log("Start Judging");
 			var judgeResult = judge.judge(workDir, fullPath, submit.memLimit, submit.timeLimit, submit.judgeType);
@@ -123,11 +128,9 @@ if (cluster.isMaster) {
 			console.log("Judge finish");
 			console.log("result:", judgeResult);
 
-
-			yield wait;
 			solution = _.assign(solution, judgeResult);
 			console.log(solution);
-			wait = [];
+			var wait = [];
 			wait.push(solution.save());
 
 			if (judgeResult.result == OJ_AC) {
