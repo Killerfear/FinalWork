@@ -106,7 +106,7 @@ if (cluster.isMaster) {
 	}
 
 } else if (cluster.isWorker) {
-	app.listen(8000, function() {
+	app.listen(8080, function() {
 		console.log("pid[" + process.pid + "]" + " Server is listening");
 	});
 }
