@@ -70,7 +70,43 @@ router.get('/show/:contestId', function(req, res, next) {
 
 		contest.isStart = true;
 
-		contest = _.omit(contest, "authorizee");
+		var AcFlg = _.indexOf(OJ_RESULT, "Accept");
+		assert.notEqual(AcFlg, -1, "Not Found");
+
+		if (user.username) {
+			var problemIds = [];
+			contest.state = {};
+
+			for (var i in contest.problems) {
+				problemIds.push(contest.problems[i].problemId);
+			}
+			console.log(problemIds);
+			console.log(user.username);
+
+			var solutions = yield DB.Solution.find({
+				 					username: user.username,
+									problemId: {$in: problemIds },
+									contestId: contest.contestId
+								}).select("-_id problemId result");
+
+
+			console.log(solutions);
+
+
+			contest.state = _.reduce(solutions, function(memo, data) {
+				var problemId = data.problemId;
+				var result = data.result;
+
+				if (!memo[problemId]) memo[problemId] = result == AcFlg ? 1 : 2;
+				if (memo[problemId] == 1) return memo;
+				memo[problemId] = 2;
+
+				return memo;
+			}, {})
+
+
+			contest = _.omit(contest, "authorizee");
+		}
 
 		return {
 			contest: contest

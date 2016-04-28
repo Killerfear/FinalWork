@@ -99,7 +99,11 @@ app.use(function(err, req, res, next) {
 
 
 module.exports = app;
+app.listen(8080, function() {
+	console.log("pid[" + process.pid + "]" + " Server is listening");
+});
 
+/*
 if (cluster.isMaster) {
 	for (var i = 0; i < numCPUs; ++i) {
 		cluster.fork();
@@ -109,4 +113,4 @@ if (cluster.isMaster) {
 	app.listen(8080, function() {
 		console.log("pid[" + process.pid + "]" + " Server is listening");
 	});
-}
+}*/

@@ -50,11 +50,11 @@
 
   <div class='col-sm-12'>
     <uib-tabset active="activeTab">
-      <uib-tab heading='Overview'>
+      <uib-tab heading='Overview' ng-click='getOverview()'>
         <br />
         <div class='col-sm-12'>
           <label>Current Time:</label> {{currentTime | date: 'yyyy-MM-dd HH:mm:ss'}}
-        </div>
+        </div>``
         <div class='col-sm-12'>
           <label>Start Time:</label> {{contest.startTime | date: 'yyyy-MM-dd HH:mm:ss'}}
         </div>
@@ -75,14 +75,12 @@
             <th></th>
           </thead>
           <tbody>
-            <tr ng-repeat='problem in contest.problems'>
-              <th class='text-right'>
-                <i style="color: #AA0000" class="glyphicon glyphicon-remove" ng-show="problemstatus == 2"></i></th>
-                <i ng-show="problem.status == 1" class="glyphicon glyphicon-ok" style="color: green;"></i>
+            <tr ng-repeat='problem in contest.problems' ng-class="{success: contest.state[problem.problemId] == 1, danger: contest.state[problem.problemId] == 2}">
+              <th>
               </th>
-              <th >{{problem.charId}}</th>
-              <th><a href="javascript:void(0);" ng-click="chooseProblem(problem.charId)">{{problem.title}}</a></th>
-              <th ng-show='problem.submited'>{{problem.solved}}/{{problem.submited}}</th>
+              <td >{{problem.charId}}</td>
+              <td><a href="javascript:void(0);" ng-click="chooseProblem(problem.charId)">{{problem.title}}</a></td>
+              <td ng-show='problem.submited'>{{problem.solved}}/{{problem.submited}}</td>
             </tr>
           </tbody>
         </table>

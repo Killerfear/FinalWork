@@ -37,7 +37,7 @@ router.get('/list/:page', function(req, res, next) {
 		var limit = 50;
 
 		var promises = yield [
-													 DB.Problem.find({ isHidden : false }).select("title problemId -_id").sort("problemId").skip(skip).limit(limit),
+													 DB.Problem.find({ isHidden : false }).select("title problemId solvedNum -_id").sort("problemId").skip(skip).limit(limit),
 													 DB.Problem.count({ isHidden: false })
 												 ];
     var problems = promises[0];
@@ -45,20 +45,21 @@ router.get('/list/:page', function(req, res, next) {
 
 		if (user) {
 			var solved = user.solved || [];
-			var unsolved = _.difference(user.submit || [], solved);
-
-			solved.sort();
-			unsolved.sort();
+			var unsolved = _.difference(user.submit || [], solved) || [];
+			console.log(user.solved);
+			console.log(user.unsolved);
 
 			var j = 0, k = 0;
 			for (var i in problems) {
-				var problem = problems[i];
+				var problem = problems[i] = problems[i].toObject();
 				while (j < solved.length && solved[j] < problem.problemId) ++j;
 				while (k < unsolved.length && unsolved[k] < problem.problemId) ++k;
 
 				if (j < solved.length && solved[j] == problem.problemId) problem.state = 1;
 				else if (k < unsolved.length && unsolved[k] == problem.problemId) problem.state = 2;
 				else problem.state = 0;
+
+				problems[i] = problem;
 			}
 		}
 
@@ -132,7 +133,10 @@ router.post('/submit', function(req, res, next) {
 
 		console.log(solution);
 
-		user.submit.addToSet(problemId);
+		var pos = _.sortedIndex(user.submit.toObject(), problemId);
+		if (user.submit.toObject()[pos] != problemId) {
+			user.submit.splice(pos, 0, problemId);
+		}
 
 		yield solution.save();
 		console.log("solution save done!");

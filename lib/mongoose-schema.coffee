@@ -14,7 +14,7 @@ UserSchema = new Schema
   salt: String
   nickname: String
   email: String
-  solved: [Number]
+  solved: { type: [Number], default: [] }
   submit: { type: [Number], default: [] }
   isAdmin: { Boolean, default: false }
   ip: String
@@ -34,6 +34,8 @@ ProblemSchema = new Schema
   memLimit: Number
   #unit: s
   timeLimit: Number
+  #solved Num
+  solvedNum: { type: Number, default: 0 }
 
 SolutionSchema = new Schema
   username: String

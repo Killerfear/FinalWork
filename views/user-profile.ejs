@@ -12,14 +12,14 @@
 <uib-tabset active="activeTab">
   <uib-tab heading="Problems">
     <legend>Solved Problems</legend>
-    <p align="left">
-      <a href="javascript:void(0);" ng-click="chooseProblem(problemId)" ng-repeat="problemId in user.sovled">
+    <p class='text-left'>
+      <a href="javascript:void(0);" class='btn btn-link' ng-click="chooseProblem(problemId)" ng-repeat="problemId in user.solved">
         {{problemId}}
       </a>
     </p>
     <legend>Unsolved Problems</legend>
-    <p align="left">
-      <a href="javascript:void(0);" ng-click="chooseProblem(problemId)" ng-repeat="problemId in user.unsolved">
+    <p clean="text-left">
+      <a href="javascript:void(0);" class="btn btn-link" ng-click="chooseProblem(problemId)" ng-repeat="problemId in user.unsolved">
         {{problemId}}
       </a>
     </p>

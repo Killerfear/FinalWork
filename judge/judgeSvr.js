@@ -134,8 +134,12 @@ if (cluster.isMaster) {
 			var wait = [];
 			wait.push(solution.save());
 
-			if (judgeResult.result == OJ_AC) {
-				wait.push(DB.User.findOneAndUpdate({ username: user.username }, { $addToSet: { solved: submit.problemId } }));
+			var pos;
+			if (judgeResult.result == OJ_AC &&
+				(pos = user.solved.toObject()[_.sortedIndex(user.solved.toObject(), submit.problemId)]) == submit.problemId) {
+				user.solved.splice(pos, 0, submit.problemId);
+				wait.push(user.save());
+				wait.push(DB.Problem.findOneAndUpdate({ problemId: submit.problemId}, { solvedNum: { $inc: 1 }}));
 			}
 
 			yield wait;

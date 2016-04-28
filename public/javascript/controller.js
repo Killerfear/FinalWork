@@ -68,7 +68,7 @@ function($rootScope, $http, $scope, $window, $location) {
         $scope.isAdmin = $rootScope.isAdmin = false;
         $scope.username = $rootScope.username = null;
         $scope.isLogin = $rootScope.isLogin = false;
-        $window.location.href = "/#/problem/list";
+        $window.location.href = "/";
       } else {
         alert("失败:" + data.toString());
       }
@@ -773,25 +773,29 @@ function($scope, $rootScope, $uibModal, $http, $routeParams, $interval) {
   $scope.activeProblemOrder = 0;
   $rootScope.currentPage = 0;
   console.log($scope.xxx);
-  $http.get('/contest/show/' + contestId)
-  .success(function(data) {
-    $scope.contest = data.contest;
-    var problems = $scope.contest.problems;
-    $scope.search.problems = [ { text: "All" }];
-    for (var i in problems) {
-      var problem = problems[i];
-      problem.charId = String.fromCharCode(parseInt(i) + 65); //'A' + i
-      $scope.search.problems.push({ text: problem.charId, value: problem.problemId });
-      if (i == 0) $scope.activeProblem = problem
-    }
-    $scope.currentTime = new Date().getTime();
-    if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
-    else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
-    else $scope.contest.status = 2;
-  })
-  .error(function(err) {
-    alert("错误: " + err);
-  })
+  $scope.getOverview = function() {
+    $http.get('/contest/show/' + contestId)
+    .success(function(data) {
+      $scope.contest = data.contest;
+      console.log($scope.contest);
+      var problems = $scope.contest.problems;
+      $scope.search.problems = [ { text: "All" }];
+      for (var i in problems) {
+        var problem = problems[i];
+        problem.charId = String.fromCharCode(parseInt(i) + 65); //'A' + i
+        $scope.search.problems.push({ text: problem.charId, value: problem.problemId });
+        if (i == 0) $scope.activeProblem = problem
+      }
+      $scope.currentTime = new Date().getTime();
+      if ($scope.currentTime < $scope.contest.startTime) $scope.contest.status = 0;
+      else if ($scope.currentTime < $scope.contest.endTime) $scope.contest.status = 1;
+      else $scope.contest.status = 2;
+    })
+    .error(function(err) {
+      alert("错误: " + err);
+    })
+  }
+  $scope.getOverview();
 
   $scope.getDuration = function(duration) {
     var hours = parseInt(duration / (60 * 60 * 1000));
@@ -961,11 +965,14 @@ function($scope, $rootScope, $uibModal, $http, $routeParams, $interval) {
 
 OJControllers.controller('userprofileCtrl',
 function($scope, $rootScope, $http, $window) {
-
   $http.get('/user/data')
   .success(function(data) {
     $scope.user = data;
     $scope.staticNick = data.nickname;
+    console.log($scope.user);
+    console.log(_.difference($scope.user.submit, $scope.user.solved));
+    $scope.user.unsolved = _.difference($scope.user.submit, $scope.user.solved)
+    console.log($scope.user);
   })
   .error(function(err) {
     alert("错误:" + err);

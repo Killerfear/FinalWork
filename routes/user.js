@@ -104,7 +104,7 @@ router.post('/signup', function(req, res, next) {
 router.get('/data', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user ? req.user.toObject() : {};
-		return _.omit(user, "salt", "password", "ip");
+		return _.omit(user, "salt", "password", "ip", "_id", "__v");
 	}));
 });
 

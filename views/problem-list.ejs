@@ -3,13 +3,16 @@
   <table class='table'>
     <thead>
       <th class='col-sm-1'>ID</th>
-      <th class='col-sm-11'>Title</th>
+      <th class='col-sm-10'>Title</th>
+      <th class='col-sm-1 text-right'></th>
     </thead>
     <tbody>
       <tr ng-repeat="problem in problems"
-      ng-class="{'success': problem.status == 1, 'danger': problem.status == 2 }">
-      <td class='col-sm-1'>{{problem.problemId}}</td>
-      <td class='col-sm-11'><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
+      ng-class="{'success': problem.state == 1, 'danger': problem.state == 2 }">
+        <td class='col-sm-1'>{{problem.problemId}}</td>
+        <td class='col-sm-10'><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
+          <td class='col-sm-1'><a href='/#/status/list?problemId={{problem.problemId}}'>x{{problem.solvedNum}}</td>
+
       </tr>
     </tbody>
   </table>
