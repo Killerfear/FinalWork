@@ -1,0 +1,93 @@
+
+<div ng-include="'/views/navbar.ejs'"> </div>
+
+<legend>
+  <h2>{{staticNick}}</h2>
+  <h3 class='text-muted'>{{user.username}}</h3>
+</legend>
+<div class='text'>
+  <p class='text-muted'>Register Time: {{user.registTime | date: 'yyyy-MM-dd HH:mm:ss' }}</p>
+</div>
+
+<uib-tabset active="activeTab">
+  <uib-tab heading="Problems">
+    <legend>Solved Problems</legend>
+    <p align="left">
+      <a href="javascript:void(0);" ng-click="chooseProblem(problemId)" ng-repeat="problemId in user.sovled">
+        {{problemId}}
+      </a>
+    </p>
+    <legend>Unsolved Problems</legend>
+    <p align="left">
+      <a href="javascript:void(0);" ng-click="chooseProblem(problemId)" ng-repeat="problemId in user.unsolved">
+        {{problemId}}
+      </a>
+    </p>
+  </uib-tab>
+  <uib-tab heading="Edit" id="EditTab">
+    <div class='alert alert-danger' ng-show='isError'>{{msg}}</div>
+    <div class="section">
+     <div class="container" style="width:100%;margin:30px;">
+       <div class="row" style="text-aligin:center;">
+         <div class="col-md-12">
+           <form name='editor' class="form-horizontal" role="form">
+             <div class="form-group">
+               <div class="col-sm-2">
+                 <label class="control-label">Password</label>
+               </div>
+               <div class="col-sm-10">
+                 <input type="password" class="form-control" placeholder="Password" ng-model="user.password" required>
+               </div>
+             </div>
+             <div class="form-group">
+               <div class="col-sm-2">
+                 <label class="control-label">Username</label>
+               </div>
+               <div class="col-sm-10">
+                 <input type="text" class="form-control" disabled="disabled" ng-model="user.username">
+               </div>
+             </div>
+             <div class="form-group">
+               <div class="col-sm-2">
+                 <label class="control-label">New &nbsp;Password</label>
+               </div>
+               <div class="col-sm-10">
+                 <input type="password" class="form-control" placeholder="New Password" ng-model="user.newPassword">
+               </div>
+             </div>
+             <div class="form-group">
+               <div class="col-sm-2">
+                 <label class="control-label">Repeat New Password</label>
+               </div>
+               <div class="col-sm-10">
+                 <input type="password" class="form-control" placeholder="Repeat New Password" ng-mode="user.repeatNewPassword">
+               </div>
+             </div>
+             <div class="form-group">
+               <div class="col-sm-2">
+                 <label class="control-label">Nickname</label>
+               </div>
+               <div class="col-sm-10">
+                 <input type="text" class="form-control" placeholder="Nickname" ng-model="user.nickname">
+               </div>
+             </div>
+             <div class="form-group">
+               <div class="col-sm-2">
+                 <label class="control-label">Email</label>
+               </div>
+               <div class="col-sm-10">
+                 <input type="email" class="form-control" placeholder="Email" ng-model="user.email">
+               </div>
+             </div>
+             <div class="form-group">
+               <div class="col-sm-offset-2 col-sm-10">
+                 <button type="submit" class="btn btn-primary" ng-click=" editor.$valid && updateProfile()">Edit</button>
+               </div>
+             </div>
+           </form>
+         </div>
+       </div>
+     </div>
+   </div>
+  </uib-tab>
+</uib-tabset>

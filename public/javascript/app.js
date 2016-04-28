@@ -59,6 +59,10 @@ function($routeProvider) {
     templateUrl: '/views/admin-problem-data',
     controller: 'adminproblemdataCtrl'
   }).
+  when('/user/profile', {
+    templateUrl: '/views/user-profile/',
+    controller: 'userprofileCtrl'
+  }).
   when('/', {
     redirectTo: '/problem/list/'
   })

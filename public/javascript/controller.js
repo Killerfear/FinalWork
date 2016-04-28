@@ -44,16 +44,18 @@ var OJControllers = angular.module('OJControllers', ['ngFileUpload']);
 
 OJControllers.controller('navCtrl',
 function($rootScope, $http, $scope, $window, $location) {
-  console.log($location);
+//  console.log($location);
   $scope.location = $location.url().match(/^\/(\w+)\//)[1];
+  $scope.user = {};
   $http.get('/user/data')
   .success(function(data) {
     $scope.isAdmin = $rootScope.isAdmin = data.isAdmin;
     $scope.username = $rootScope.username = data.username;
+    $scope.user = $rootScope.user = data;
     if (data.username && data.username.length) {
       $scope.isLogin = $rootScope.isLogin = true;
     }
-    console.log($rootScope);
+//    console.log($rootScope);
   })
   .error(function(err) {
     alert("错误:" + err);
@@ -955,3 +957,42 @@ function($scope, $rootScope, $uibModal, $http, $routeParams, $interval) {
 
   }
 });
+
+
+OJControllers.controller('userprofileCtrl',
+function($scope, $rootScope, $http, $window) {
+
+  $http.get('/user/data')
+  .success(function(data) {
+    $scope.user = data;
+    $scope.staticNick = data.nickname;
+  })
+  .error(function(err) {
+    alert("错误:" + err);
+  })
+
+  $scope.chooseProblem = function(problemId) {
+    if (problemId) {
+      $window.location.href = '/#/problem/show/' + problemId.toString();
+    }
+  }
+
+  console.log($scope);
+  $scope.updateProfile = function() {
+    $http.post('/user/profile/', $scope.user)
+         .success(function(data) {
+           if (data.result == "success") {
+             alert("Success");
+             $scope.isError = false;
+             $scope.staticNick = $scope.user.nickname;
+             $window.location.href = "/#/user/profile";
+           } else {
+             $scope.isError = true;
+             $scope.msg = data.msg;
+           }
+         })
+         .error(function(err) {
+           alert("错误: " + err);
+         })
+  }
+})

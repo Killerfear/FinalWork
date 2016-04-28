@@ -3,10 +3,13 @@ var router = express.Router();
 var co = require('co');
 var crypto = require('crypto');
 var bcrypt = require('bcrypt');
+var bluebird = require('bluebird');
 var _ = require('underscore');
 
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
+
+bluebird.promisifyAll(bcrypt);
 
 var legalUsername = co.wrap(function * (text) {
 	text = text.toLower();
@@ -112,11 +115,35 @@ router.post('/profile', function(req, res, next) {
 
 		if (!user) throw { message: "未登录" }
 
-		var setter = _.pick(req.body, 'nickname', 'email', 'gender');
+		var haxiPass = yield bcrypt.hashAsync(req.body.password, user.salt);
+		if (haxiPass != user.password)	{
+			return {
+				result: "fail",
+				msg: "密码错误"
+			}
+		}
 
-		user = _.extend(user, setter);
+		if ((req.body.repeatNewPassword || req.body.newPassword) && req.body.repeatNewPassword == req.body.newPassword) {
+			return {
+				result: "fail",
+				msg: "密码不一致"
+			}
+		}
 
-		return user.save();
+		user.nickname = req.body.nickname;
+		user.email = req.body.email;
+		console.log(user);
+
+		if (req.body.newPassword) {
+			user.password = req.body.newPassword;
+			user.salt = yield bcrypt.genSaltAsync();
+			user.password = yield bcrypt.hashAsync(user.password, user.salt);
+		}
+
+		yield user.save();
+		return {
+			result : "success"
+		}
 	}));
 });
 
