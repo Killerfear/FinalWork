@@ -11,20 +11,9 @@ var LogicHandler = require('../lib/logic-handler');
 
 bluebird.promisifyAll(bcrypt);
 
-var legalUsername = co.wrap(function * (text) {
-	text = text.toLower();
-	for (var i = 0; i < text.length; ++i) {
-		var ch = text[i];
-		if ('a' <= ch && ch <= 'z') continue;
-		if ('0' <= ch && ch <= '9') continue;
-		if (ch == '_') continue;
-		return false;
-	}
-	return true;
-});
-
-
-function buildJson(data) { return { json: data } };
+var legalUsername = function(text) {
+	return text.match(/^[a-zA-Z\d]+(_([a-zA-Z\d])+)?$/);
+}
 
 
 //登录
@@ -72,13 +61,13 @@ router.post('/signup', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function *() {
 		var body = req.body;
 
-		if (!legalUsername(body.username)) return buildJson({ result: "fail", msg: "账户名格式有误" });
-		if (body.password.length < 6) return buildJson({ result: 'fail', msg: "密码长度过短" });
-		if (body.password != body.reppassword) return buildJson({ result: 'fail', msg: "密码不一致" });
+		if (!legalUsername(body.username)) throw { message: "账户名格式有误" };
+		if (body.password.length < 7) throw { message: "密码长度过短" };
+		if (body.password != body.repeatPassword) throw {  message: "密码不一致" };
 
 		var user = yield User.getByName(body.username);
 
-		if (user) return buildJson({ result : 'fail', msg: "账户已存在" });
+		if (user) return { result : 'fail', msg: "账户已存在" };
 
 		user = {};
 
@@ -86,8 +75,7 @@ router.post('/signup', function(req, res, next) {
 		user.email = body.email;
 		user.submit = [];
 		user.solved = [];
-		user.gender = body.gender;
-		user._id = body.username;
+		user.username = body.username;
 		user.password = body.password;
 		user.nickname = body.nickname;
 		user.registTime = new Date().getTime();
@@ -96,7 +84,7 @@ router.post('/signup', function(req, res, next) {
 		user.password = bcrypt.hashSync(user.password, user.salt);
 
 		yield User.create(user);
-		return buildJson({ result: 'success', msg: '注册成功'});
+		return { result: 'success' };
 	}));
 });
 

@@ -1003,3 +1003,39 @@ function($scope, $rootScope, $http, $window) {
          })
   }
 })
+
+
+OJControllers.controller('usersignupCtrl',
+function($scope, $http, $window) {
+  $scope.postData = {};
+  $scope.submit = function() {
+    $http.post('/user/signup', $scope.postData)
+         .success(function(data) {
+           if (data.result == 'fail') {
+             $scope.isError = true;
+             $scope.msg = data.msg;
+           }
+           else {
+             $scope.isError = false;
+             alert("register success, please go to login")
+             $window.location.href = "/#/user/login";
+           }
+         })
+         .error(function(err) {
+           alert("错误:" + err);
+         })
+  }
+
+  $scope.checkUsername = function() {
+    return $scope.postData.username && $scope.postData.username.match(/^[a-zA-Z\d]+(_([a-zA-Z\d])+)?$/)
+  }
+  $scope.checkData = function() {
+
+    return $scope.signupForm.$valid &&
+            $scope.postData.repeatPassword == $scope.postData.password &&
+              $scope.postData.password.length >= 7 && $scope.checkUsername();
+
+  }
+
+
+})

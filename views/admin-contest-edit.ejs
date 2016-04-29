@@ -1,126 +1,122 @@
 
-
-
-<div ng-include="'views/navbar.ejs'"></div>
-
-
-
-<div class="section">
-	<div class="container">
-		<div class="row">
-			<div class="col-md-12">
-				<h1 class='text-center'>{{pageTitle}}</h1>
-				<form name='editor' class="form-horizontal" role="form">
-					<div class="form-group has-feedback">
-						<div class="col-sm-2">
-							<label class="control-label">Title</label>
+<div ng-show="$root.isAdmin">
+	<div ng-include="'views/navbar.ejs'"></div>
+	<div class="section">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<h1 class='text-center'>{{pageTitle}}</h1>
+					<form name='editor' class="form-horizontal" role="form">
+						<div class="form-group has-feedback">
+							<div class="col-sm-2">
+								<label class="control-label">Title</label>
+							</div>
+							<div class="col-sm-4">
+								<input type="text" class="form-control" ng-model='contest.title' placeholder="Title" autofocus required>
+							</div>
 						</div>
-						<div class="col-sm-4">
-							<input type="text" class="form-control" ng-model='contest.title' placeholder="Title" autofocus required>
-						</div>
-					</div>
-					<div class="form-group">
-						<div class='col-sm-2'>
-							<label class='control-label'>Start Time</label>
-						</div>
-						<div class="col-sm-3">
-							<div class="dropdown">
-								<a class="dropdown-toggle my-toggle-select" id="startTimePicker" role="button" data-toggle="dropdown" data-target="#" href="">
+						<div class="form-group">
+							<div class='col-sm-2'>
+								<label class='control-label'>Start Time</label>
+							</div>
+							<div class="col-sm-3">
+								<div class="dropdown">
+									<a class="dropdown-toggle my-toggle-select" id="startTimePicker" role="button" data-toggle="dropdown" data-target="#" href="">
 										<div class='input-group'>
 											<input type='text' data-ng-model=' contest.startTime | date: "yyyy-MM-dd HH:mm:ss"' class='form-control'>
 											<span class='input-group-addon'><i class='glyphicon glyphicon-calendar'></i></span>
 										</div>
-								</a>
-								<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-									<datetimepicker data-ng-model="contest.startTime"
-									data-datetimepicker-config="{ dropdownSelector: '#startTimePicker'  }"
-									></datetimepicker>
-								</ul>
-							</div>
+									</a>
+									<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+										<datetimepicker data-ng-model="contest.startTime"
+										data-datetimepicker-config="{ dropdownSelector: '#startTimePicker'  }"
+										></datetimepicker>
+									</ul>
+								</div>
 
+							</div>
 						</div>
-					</div>
-					<div class="form-group form-inline">
-						<div class='col-sm-2'>
-							<label class='control-label'>Duration</label>
-						</div>
-						<div class="col-sm-10">
+						<div class="form-group form-inline">
+							<div class='col-sm-2'>
+								<label class='control-label'>Duration</label>
+							</div>
+							<div class="col-sm-10">
 								<label class='control-label'><input type='text' class="form-control" ng-model='duration.day'>Days</label>
 								<label class='control-label'><input type='text' class="form-control" ng-model='duration.hour'>Hours</label>
 								<label class='control-label'><input type='text' class="form-control" ng-model='duration.minute'>Minutes</label>
-						</div>
-					</div>
-					<div class="form-group">
-						<div class="col-sm-2">
-							<label class="control-label">Public/Private
-								<br>
-							</label>
-						</div>
-						<div class="col-sm-2">
-							<select class="form-control" ng-model='contest.isPrivate' ng-options='auth.value as auth.text for auth in auths'>
-								<option value="0">Public</option>
-								<option value="1">Private</option>
-							</select>
-						</div>
-					</div>
-					<div class="form-group">
-						<div class="col-sm-2">
-							<label class="control-label">Visibility
-								<br>
-							</label>
-						</div>
-						<div class="col-sm-2">
-							<select class="form-control" ng-model='contest.isHidden' ng-options='visible.value as visible.text for visible in visibles'>
-								<option value="0">visible</option>
-								<option value="1">invisible</option>
-							</select>
-						</div>
-					</div>
-					<div class='form-group' ng-show="contest.isPrivate">
-						<div class='col-sm-2'>
-							<label class='control-label'>Users</label>
-						</div>
-						<div class='col-sm-6'>
-							<input type='text' class='form-control' ng-model="authorizee" placeholder="Username seperated by space or ','">
-						</div>
-					</div>
-					<div class='form-group'>
-						<div class='col-sm-2'>
-							<label class='control-label'>
-								Problems
-							</label>
-						</div>
-						<div class='col-sm-6'>
-							<table>
-								<thead>
-									<th></th>
-									<th></th>
-									<th></th>
-									<th></th>
-								</thead>
-								<tbody>
-									<tr ng-repeat="problem in problems">
-										<td><a href="javascript:void(0);" class="glyphicon glyphicon-remove" ng-click="remove($index)">&nbsp;</a>
-										<td><input type='text' class='form-control' placeholder="problemId" ng-model="problem.id" ng-init="getTitle(problem.id, $index)" ng-change="getTitle(problem.id, $index)"></td>
-										<td ng-class="{'text-danger': !problem.isFound}">&nbsp;&nbsp;{{getChar($index - 0 + 65)}}</td>
-										<td ng-class="{'text-danger': !problem.isFound}">&nbsp;-&nbsp;&nbsp;{{problem.title}}</td>
-									</tr>
-								</tbody>
-							</table>
-							<div style="margin-left:80px" ng-show="problems.length < 26">
-								<a style="margin-top:10px;"class='glyphicon glyphicon-plus' href="javascript:void(0);" ng-click="add()"></a>
 							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-2">
+								<label class="control-label">Public/Private
+									<br>
+								</label>
+							</div>
+							<div class="col-sm-2">
+								<select class="form-control" ng-model='contest.isPrivate' ng-options='auth.value as auth.text for auth in auths'>
+									<option value="0">Public</option>
+									<option value="1">Private</option>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-2">
+								<label class="control-label">Visibility
+									<br>
+								</label>
+							</div>
+							<div class="col-sm-2">
+								<select class="form-control" ng-model='contest.isHidden' ng-options='visible.value as visible.text for visible in visibles'>
+									<option value="0">visible</option>
+									<option value="1">invisible</option>
+								</select>
+							</div>
+						</div>
+						<div class='form-group' ng-show="contest.isPrivate">
+							<div class='col-sm-2'>
+								<label class='control-label'>Users</label>
+							</div>
+							<div class='col-sm-6'>
+								<input type='text' class='form-control' ng-model="authorizee" placeholder="Username seperated by space or ','">
+							</div>
+						</div>
+						<div class='form-group'>
+							<div class='col-sm-2'>
+								<label class='control-label'>
+									Problems
+								</label>
+							</div>
+							<div class='col-sm-6'>
+								<table>
+									<thead>
+										<th></th>
+										<th></th>
+										<th></th>
+										<th></th>
+									</thead>
+									<tbody>
+										<tr ng-repeat="problem in problems">
+											<td><a href="javascript:void(0);" class="glyphicon glyphicon-remove" ng-click="remove($index)">&nbsp;</a>
+												<td><input type='text' class='form-control' placeholder="problemId" ng-model="problem.id" ng-init="getTitle(problem.id, $index)" ng-change="getTitle(problem.id, $index)"></td>
+												<td ng-class="{'text-danger': !problem.isFound}">&nbsp;&nbsp;{{getChar($index - 0 + 65)}}</td>
+												<td ng-class="{'text-danger': !problem.isFound}">&nbsp;-&nbsp;&nbsp;{{problem.title}}</td>
+											</tr>
+										</tbody>
+									</table>
+									<div style="margin-left:80px" ng-show="problems.length < 26">
+										<a style="margin-top:10px;"class='glyphicon glyphicon-plus' href="javascript:void(0);" ng-click="add()"></a>
+									</div>
 
-						</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<div class="col-sm-offset-2 col-sm-10">
+									<button type="submit" class="btn btn-default" ng-click='submit()'>Submit</button>
+								</div>
+							</div>
+						</form>
 					</div>
-					<div class="form-group">
-						<div class="col-sm-offset-2 col-sm-10">
-							<button type="submit" class="btn btn-default" ng-click='submit()'>Submit</button>
-						</div>
-					</div>
-				</form>
+				</div>
 			</div>
 		</div>
 	</div>
-
-</div>

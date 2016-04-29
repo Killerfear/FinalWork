@@ -35,6 +35,10 @@ function($routeProvider) {
     templateUrl: '/views/user-login',
     controller: 'userloginCtrl'
   }).
+  when('/user/signup', {
+    templateUrl: '/views/user-signup',
+    controller: 'usersignupCtrl'
+  }).
   when('/status/list', {
     templateUrl: '/views/status-list',
     controller: 'statuslstCtrl'

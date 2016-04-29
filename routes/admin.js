@@ -23,8 +23,8 @@ bluebird.promisifyAll(child_process);
 
 router.get("*", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user || {};
-		if (!user.isAdmin) return next({ message: "无权限" });
+		var user = req.user;
+		if (!user || !user.isAdmin) throw { message: "无权限" };
 		next();
 	}));
 });

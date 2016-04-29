@@ -1,4 +1,5 @@
 
+<div ng-show="$root.isAdmin">
 <script src="http://cdn.bootcss.com/bootstrap-filestyle/1.2.1/bootstrap-filestyle.min.js"></script>
 <div class='col-md-4'>
   <input type='file' ngf-multiple='true' class='filestyle' ngf-select data-badge='false' data-input='false' ngf-change='upload($files)'
@@ -58,3 +59,5 @@
 		<button class="btn btn-default" type="button" ng-click="no()">No</button>
 	</div>
 </script>
+
+</div>

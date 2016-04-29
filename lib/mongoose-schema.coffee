@@ -16,7 +16,7 @@ UserSchema = new Schema
   email: String
   solved: { type: [Number], default: [] }
   submit: { type: [Number], default: [] }
-  isAdmin: { Boolean, default: false }
+  isAdmin: { type: Boolean, default: false }
   ip: String
   registTime: String
 
