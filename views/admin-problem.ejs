@@ -1,47 +1,47 @@
 <div ng-show="$root.isAdmin">
-<div ng-include="'/views/navbar'"></div>
+  <div ng-include="'/views/navbar'"></div>
 
-<div class='container'>
-  <a class="active btn btn-primary" href='/#/admin/problem/edit'><i class="glyphicon glyphicon-plus"></i>Add Problem</a>
-  <div ng-include="'/views/pagination.ejs'"></div>
-  <!-- -->
+  <div class='container'>
+    <a class="active btn btn-primary" href='/#/admin/problem/edit'><i class="glyphicon glyphicon-plus"></i>Add Problem</a>
+    <div ng-include="'/views/pagination.ejs'"></div>
+    <!-- -->
 
-  <table class='table'>
-    <thead>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th class='col-sm-1'>ID</th>
-      <th class='col-sm-11'>Title</th>
-    </thead>
-    <tbody>
-      <tr ng-repeat="problem in problems">
-        <td>
-          <a class='glyphicon glyphicon-edit' href='/#/admin/problem/edit?problemId={{problem.problemId}}'></a>
-        </td>
-        <td>
-          <a class='glyphicon glyphicon-trash' href='javascript:void(0);' ng-click='open(problem.title,problem.problemId)'></a>
-        </td>
-        <td>
-          <a href='/#/admin/problem/data/{{problem.problemId}}' target="_blank" class='glyphicon glyphicon-file'></a>
-        </td>
-        <td class='col-sm-1'>{{problem.problemId}}</td>
-        <td class='col-sm-11'><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
-        </tr>
-      </tbody>
-    </table>
+    <table class='table'>
+      <thead>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th class='col-sm-1'>ID</th>
+        <th class='col-sm-11'>Title</th>
+      </thead>
+      <tbody>
+        <tr ng-repeat="problem in problems">
+          <td>
+            <a class='glyphicon glyphicon-edit' href='/#/admin/problem/edit?problemId={{problem.problemId}}'></a>
+          </td>
+          <td>
+            <a class='glyphicon glyphicon-trash' href='javascript:void(0);' ng-click='open(problem.title,problem.problemId)'></a>
+          </td>
+          <td>
+            <a href='/#/admin/problem/data/{{problem.problemId}}' target="_blank" class='glyphicon glyphicon-file'></a>
+          </td>
+          <td class='col-sm-1'>{{problem.problemId}}</td>
+          <td class='col-sm-11'><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
+          </tr>
+        </tbody>
+      </table>
 
-	<script type="text/ng-template" id="confirmModal.html">
-		<div class="modal-header">
-			<h3 class="modal-title">Delete {{title}}</h3>
-		</div>
-		<div class="modal-body">
-			<p>Are you sure to delete problem: {{title}}</p>
-		</div>
-		<div class="modal-footer">
-			<button class="btn btn-default" type="button" ng-click="ok()">Yes</button>
-			<button class="btn btn-default" type="button" ng-click="cancel()">No</button>
-		</div>
-	</script>
-</div>
-</div>
+      <script type="text/ng-template" id="confirmModal.html">
+      <div class="modal-header">
+      <h3 class="modal-title">Delete {{title}}</h3>
+      </div>
+      <div class="modal-body">
+      <p>Are you sure to delete problem: {{title}}</p>
+      </div>
+      <div class="modal-footer">
+      <button class="btn btn-default" type="button" ng-click="ok()">Yes</button>
+      <button class="btn btn-default" type="button" ng-click="cancel()">No</button>
+      </div>
+      </script>
+    </div>
+  </div>
