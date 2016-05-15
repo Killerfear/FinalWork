@@ -85,7 +85,7 @@ router.get('/problem/data', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var problemId = parseInt(req.query.problemId);
 		var problem = yield DB.Problem.findOne({ problemId: problemId })
-																  .select('-_id problemId title timeLimit memLimit isHidden description input output sampleInput sampleOutput');
+																  .select('-_id problemId title timeLimit memLimit isHidden description input output sampleInput sampleOutput judgeType');
 		return {
 			problem: problem
 		}
@@ -96,6 +96,16 @@ router.get('/problem/data', function(req, res, next) {
 router.post("/problem/add", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var problem = req.body.problem;
+
+		const igBlankLine = 1 << 0;
+		const igTraillingSpace = 1 << 1;
+		const igHeadingSpace = 1 << 2;
+		const igSpaceAmount = 1 << 3;
+
+		if (problem.igBlankLine) problem.judgeType |= igBlankLine;
+		if (problem.igTraillingSpace) problem.judgeType |= igTraillingSpace;
+		if (problem.igHeadingSpace) problem.judgeType |= igHeadingSpace;
+		if (problem.igSpaceAmount) problem.judgeType |= igSpaceAmount;
 
 		problem = new DB.Problem(problem);
 		problem = yield problem.save();
@@ -128,6 +138,18 @@ router.post("/problem/update", function(req, res, next) {
 
 		var problemId = parseInt(problem.problemId);
 		if (problemId != problem.problemId) throw { message: "参数不合法" }
+
+		const igBlankLine = 1 << 0;
+		const igTraillingSpace = 1 << 1;
+		const igHeadingSpace = 1 << 2;
+		const igSpaceAmount = 1 << 3;
+
+		problem.judgeType = 0;
+
+		if (problem.igBlankLine) problem.judgeType |= igBlankLine;
+		if (problem.igTraillingSpace) problem.judgeType |= igTraillingSpace;
+		if (problem.igHeadingSpace) problem.judgeType |= igHeadingSpace;
+		if (problem.igSpaceAmount) problem.judgeType |= igSpaceAmount;
 
 		console.log(problem);
 		console.log('problemId:', problemId);

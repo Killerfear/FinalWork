@@ -7,12 +7,16 @@
       <th class='col-sm-1 text-right'></th>
     </thead>
     <tbody>
+      <tr>
+        <td><input class='form-control' type='text' ng-model='query.problemId' ng-change='getItems()'></td>
+        <td><input style="width:30%;" class='form-control' type='text' ng-model='query.content' ng-change='getItems()'></td>
+        <td></td>
+      </tr>
       <tr ng-repeat="problem in problems"
       ng-class="{'success': problem.state == 1, 'danger': problem.state == 2 }">
         <td class='col-sm-1'>{{problem.problemId}}</td>
         <td class='col-sm-10'><a href="/#/problem/show/{{problem.problemId}}">{{problem.title}}</td>
-          <td class='col-sm-1'><a href='/#/status/list?problemId={{problem.problemId}}'>x{{problem.solvedNum}}</td>
-
+        <td class='col-sm-1'><a href='/#/status/list?problemId={{problem.problemId}}'>x{{problem.solvedNum}}</td>
       </tr>
     </tbody>
   </table>

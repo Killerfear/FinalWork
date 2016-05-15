@@ -12,6 +12,8 @@ bluebird.promisifyAll(fs);
 bluebird.promisifyAll(xml2js);
 bluebird.promisifyAll(http);
 
+const Cookie = "connect.sid=s%3AS-mr7NYxQbO8GoXzwIaZdRdBbRwW94Yr.9ELYW53qAFUStJoqGrQJcTKXiu7PuMRT0cCev67Vors";
+
 const addProblem = 0;
 const addData = 1;
 const mode = addData;
@@ -62,7 +64,7 @@ var AddProblem = co.wrap(function * (problem) {
 				"Referer": "http://localhost/",
 				"Accept-Encoding": "gzip, deflate, sdch",
 				"Accept-Language": "zh-CN,zh;q=0.8",
-				"Cookie": "connect.sid=s%3AS-mr7NYxQbO8GoXzwIaZdRdBbRwW94Yr.9ELYW53qAFUStJoqGrQJcTKXiu7PuMRT0cCev67Vors"
+				"Cookie": Cookie
 			}
 		}
 
@@ -86,6 +88,10 @@ var AddProblem = co.wrap(function * (problem) {
 
 co(function * () {
 	var files = yield fs.readdirAsync('../../parseProblem');
+
+	return	yield DB.Problem.update({}, { judgeType: 0 }, { multi: true });
+
+
 	for (var i in files) {
 		var file = files[i];
 		if (!file.match(/problem*/)) continue;

@@ -1,3 +1,9 @@
+
+const igBlankLine = 1 << 0;
+const igTraillingSpace = 1 << 1;
+const igHeadingSpace = 1 << 2;
+const igSpaceAmount = 1 << 3;
+
 function sprintf() {
   var i = 0, a, f = arguments[i++], o = [], m, p, c, x, s = '';
   while (f) {
@@ -127,10 +133,14 @@ function($scope, $http, $window) {
 });
 
 OJControllers.controller('problemlstCtrl',
-function($scope, $http, $rootScope) {
+function($scope, $http, $rootScope, $location) {
+
+  if (!$scope.query) $scope.query = $location.search();
 
   $rootScope.getItems = function() {
-    $http.get('/problem/list/' + $rootScope.currentPage)
+    var url = new URI('/problem/list/' + $rootScope.currentPage).addSearch($scope.query).toString();
+    console.log($scope.query);
+    $http.get(url)
     .success(function(data) {
       $scope = _.assign($scope, data);
       $rootScope.totalItems = data.problemCount;
@@ -383,8 +393,10 @@ function($scope, $uibModalInstance, $http, title) {
 
 OJControllers.controller('adminproblemeditCtrl',
 function($scope, $http, $location, $window) {
+
   var param = $location.search();
   var problemId = param.problemId;
+
   $scope.problem = { isHidden: true };
   if (problemId) {
     $scope.pageTitle = 'Edit Problem'
@@ -392,8 +404,15 @@ function($scope, $http, $location, $window) {
     console.log(url);
     $http.get(url)
     .success(function(data) {
-      if (data.problem)
-      $scope.problem = data.problem;
+      if (data.problem) {
+        $scope.problem = data.problem;
+        var bitState = $scope.problem.judgeType;
+        if (bitState & igBlankLine) $scope.problem.igBlankLine = true;
+        if (bitState & igTraillingSpace) $scope.problem.igTraillingSpace = true;
+        if (bitState & igHeadingSpace) $scope.problem.igHeadingSpace = true;
+        if (bitState & igSpaceAmount) $scope.problem.igSpaceAmount = true;
+      }
+
     })
     .error(function(err) {
       alert('错误：' + err);
@@ -408,6 +427,7 @@ function($scope, $http, $location, $window) {
     console.log($scope.problem.description);
     if (!problemId) {
       //add Problem
+      console.log($scope.problem);
       $http.post('/admin/problem/add', { problem: $scope.problem })
       .success(function(data){
         $window.location.href = '/#/admin/problem/';
@@ -424,7 +444,22 @@ function($scope, $http, $location, $window) {
 });
 
 OJControllers.controller('adminproblemdataCtrl',
-function($scope, $routeParams, $http, $uibModal, $window, Upload) {
+function($scope, $routeParams, $http, $uibModal, $window, $rootScope, Upload) {
+  $scope.user = {};
+  $http.get('/user/data')
+  .success(function(data) {
+    $scope.isAdmin = $rootScope.isAdmin = data.isAdmin;
+    $scope.username = $rootScope.username = data.username;
+    $scope.user = $rootScope.user = data;
+    if (data.username && data.username.length) {
+      $scope.isLogin = $rootScope.isLogin = true;
+    }
+    //    console.log($rootScope);
+  })
+  .error(function(err) {
+    alert("错误:" + err);
+  })
+
   $scope.problemId = $routeParams.problemId;
   $scope.getDataList = function() {
     $http.get('/admin/problem/data/list?problemId=' + $scope.problemId)

@@ -36,9 +36,21 @@ router.get('/list/:page', function(req, res, next) {
 		var skip = (page - 1) * 50;
 		var limit = 50;
 
+		var query = { isHidden: false };
+		if (req.query.problemId) {
+			query.problemId = { $gte: req.query.problemId };
+		}
+
+		if (req.query.content) {
+			query.title = eval("/.*" + req.query.content + ".*/i");
+			query.description = query.title;
+		}
+
+		console.log(query);
+
 		var promises = yield [
-													 DB.Problem.find({ isHidden : false }).select("title problemId solvedNum -_id").sort("problemId").skip(skip).limit(limit),
-													 DB.Problem.count({ isHidden: false })
+													 DB.Problem.find(query).select("title problemId solvedNum -_id").sort("problemId").skip(skip).limit(limit),
+													 DB.Problem.count(query)
 												 ];
     var problems = promises[0];
 		var problemCount = promises[1];
@@ -149,10 +161,11 @@ router.post('/submit', function(req, res, next) {
 			solutionId: solution.solutionId,
 			srcCode: srcCode,
 			problemId: problemId,
-			judgeType: 0,
+			judgeType: problem.judgeType,
 			memLimit: problem.memLimit,
 			timeLimit: problem.timeLimit
 		}
+		console.log(judgeData);
 		socket.emit('judge', judgeData);
 		console.log('emit done');
 		//res.redirect('/status');

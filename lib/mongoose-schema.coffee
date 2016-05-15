@@ -28,7 +28,7 @@ ProblemSchema = new Schema
   output: String
   sampleInput: String
   sampleOutput: String
-  judgeType: Number
+  judgeType: { type: Number default: 0 }
   isHidden: Boolean
   #unit: mb
   memLimit: Number
