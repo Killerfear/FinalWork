@@ -91,10 +91,22 @@ router.get('/data/:problemId', function(req, res, next) {
 		console.log(user);
 		var problemId = req.params.problemId;
 		console.log(problemId)
-		var problem = yield DB.Problem.findOne({ problemId: parseInt(problemId) }, "-_id");
-		console.log(problem);
 
+		//try to get from redis
+		var problem = JSON.parse(yield redis.getAsync("problem" + problemId));
+
+		if (!problem) {
+			//not found in redis, get from mongo
+			problem = yield DB.Problem.findOne({ problemId: parseInt(problemId) }, "-_id");
+		}
+
+		console.log(problem);
 		if (!problem || (!user.isAdmin && problem.isHidden)) throw { message: "题目不存在" }
+
+		yield redis.setAsync("problem" + problemId, JSON.stringify(problem));
+
+		//cache for 15 minute
+		yield redis.expireAsync("problem" + problemId, 60 * 10);
 
 		console.log(problem);
 

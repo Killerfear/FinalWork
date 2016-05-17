@@ -153,10 +153,24 @@ router.post("/problem/update", function(req, res, next) {
 
 		console.log(problem);
 		console.log('problemId:', problemId);
-		var updateRes = yield DB.Problem.findOneAndUpdate({ problemId: problemId }, problem);
+		var updateRes = yield DB.Problem.findOneAndUpdate({ problemId: problemId }, problem, { new : true });
+
+		if (updateRes) {
+			updateRes = updateRes.toObject();
+		}
+
 		console.log(updateRes);
 
 		var filePath = path.join(__dirname, "../problem/", problemId.toString());
+
+		var cacheProblem = yield redis.getAsync('problem' + problemId);
+
+		if (cacheProblem) {
+			updateRes = _.omit(updateRes, "_id");
+			yield redis.setAsync("problem" + problemId, JSON.stringify(updateRes));
+			yield redis.expireAsync("problem" + problemId, 60 * 10);
+		}
+
 
 		yield [
 			fs.writeFileAsync(filePath + "/sample.in", problem.sampleInput, "utf-8"),
