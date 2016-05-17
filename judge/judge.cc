@@ -70,14 +70,9 @@ const int use_max_time = 0;
 #endif
 
 
-int LANG_CV[256]=
-//#if __WORDSIZE == 64
-	{SYS_arch_prctl, SYS_readlink, SYS_execve, SYS_uname, SYS_brk,SYS_access, SYS_fstat, SYS_mmap, SYS_write, SYS_exit_group, 0};
-//#else
-//	{SYS_arch_prctl, SYS_readlink, SYS_execve, SYS_uname, SYS_brk, 0};
-//#endif
+int LANG_CV[256] = {SYS_arch_prctl, SYS_readlink, SYS_execve, SYS_uname, SYS_brk,SYS_access, SYS_fstat, SYS_mmap, SYS_write, SYS_exit_group, 0};
 
-int LANG_CC[256]={-1, -1, 1, 2, -1, -1, -1, -1, -1, 1, 0};
+int LANG_CC[256]={-1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 0};
 
 int call_counter[512];
 
@@ -103,12 +98,6 @@ void getParameters(const FunctionCallbackInfo<Value>& args, string & workDir, st
 					String::NewFromUtf8(isolate, "Wrong number of arguments")));
 		return;
 	}
-
-	/*if (!args[0]->IsString() || !args[1]->IsString() || !args[2]->IsNumber()
-			|| !args[3]->IsNumber() || !args[4]->IsNumber()) {
-		isolate->ThrowException(Exception::TypeError(
-		        String::NewFromUtf8(isolate, "Wrong arguments")));
-	}*/
 
 	memLimit = args[2]->NumberValue();
 	timeLimit = args[3]->NumberValue();
@@ -262,7 +251,6 @@ void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int judgeTy
 	int status, sig, exitcode;
 	struct user_regs_struct reg;
 	struct rusage ruse;
-	int sub = 0;
 	while (1)
 	{
 		// check the usage
@@ -369,10 +357,10 @@ void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int judgeTy
 			}
 			break;
 		}
-		/*     comment from http://www.felix021.com/blog/read.php?1662
-WIFSTOPPED: return true if the process is paused or stopped while ptrace is watching on it
-WSTOPSIG: get the signal if it was stopped by signal
-		 */
+		/*
+		WIFSTOPPED: return true if the process is paused or stopped while ptrace is watching on it
+		WSTOPSIG: get the signal if it was stopped by signal
+		*/
 
 		// check the system calls
 		ptrace(PTRACE_GETREGS, pidApp, NULL, &reg);
@@ -395,7 +383,6 @@ WSTOPSIG: get the signal if it was stopped by signal
 				call_counter[reg.REG_SYSCALL]--;
 
 		}
-		sub = 1 - sub;
 
 		ptrace(PTRACE_SYSCALL, pidApp, NULL, NULL);
 	}
@@ -407,14 +394,6 @@ WSTOPSIG: get the signal if it was stopped by signal
 	usedtime += (ruse.ru_stime.tv_sec * 1000 + ruse.ru_stime.tv_usec / 1000);
 }
 
-
-void delnextline(char s[])
-{
-	int L;
-	L = strlen(s);
-	while (L > 0 && (s[L - 1] == '\n' || s[L - 1] == '\r'))
-		s[--L] = 0;
-}
 
 bool isBlankLine(const string & s)
 {
@@ -514,7 +493,7 @@ int compareWithMode(const char * file1, const char * file2, int mode)
 		return OJ_AC;
 	}
 
-	ifstream f2(file2, ios::binary | ifstream::in);
+	ifstream f2(file2, ifstream::binary | ifstream::in);
 
 	if (!f2.is_open()) {
 		f1.close();
@@ -643,7 +622,6 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 				max_case_time=usedtime>max_case_time?usedtime:max_case_time;
 				usedtime=0;
 			}
-			//clean_session(pidApp);
 		}
 	}
 

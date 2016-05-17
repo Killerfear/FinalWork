@@ -35,14 +35,14 @@ app.set('view engine', 'ejs');
 var hour = 60 * 60 * 1000;
 
 app.use(logger('dev'));
-app.use(bodyParser.json({limit : 2 * 1024 * 1024} /*32kb}*/));
+app.use(bodyParser.json({limit : 2 * 1024 * 1024} /*2mb}*/));
 app.use(bodyParser.urlencoded({ extended: false,limit : 2 * 1024 * 1024 }));
 app.use(bodyParser.raw({ limit : 2 * 1024 * 1024 }));
 app.use(cookieParser('oiwejopepw;'));
 app.use(session({
 	secret: 'randomstr',
 	store: new redisStore({ prefix: 'sid'}),
-	cookie: { httpOnly: true, maxAge: hour * 100 },
+	cookie: { httpOnly: true, maxAge: hour * 5 },
 	resave: false,
 	saveUninitialized: true
 }));
@@ -99,11 +99,13 @@ app.use(function(err, req, res, next) {
 
 
 module.exports = app;
+
+/*
 app.listen(8080, function() {
 	console.log("pid[" + process.pid + "]" + " Server is listening");
 });
+*/
 
-/*
 if (cluster.isMaster) {
 	for (var i = 0; i < numCPUs; ++i) {
 		cluster.fork();
@@ -113,4 +115,4 @@ if (cluster.isMaster) {
 	app.listen(8080, function() {
 		console.log("pid[" + process.pid + "]" + " Server is listening");
 	});
-}*/
+}
