@@ -137,6 +137,10 @@ void initSyscallsLimits()
 		setCallCount(SYS_set_thread_area, -1);
 	#endif
 
+	#ifdef SYS_read
+			setCallCount(SYS_read, -1);
+	#endif
+
 	setCallCount(252, 2);
 
 }
