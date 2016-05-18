@@ -76,7 +76,6 @@ void initSyscallsLimits()
 {
 	memset(call_counter, 0, sizeof(call_counter));
 	#define setCallCount(sys, num) call_counter[sys] = num
-	int i;
 	#ifdef SYS_arch_prctl
 		setCallCount(SYS_arch_prctl, -1);
 	#endif
@@ -392,7 +391,7 @@ void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int judgeTy
 			ACflg = OJ_RE;
 
 			char error[BUFFER_SIZE];
-			sprintf(error,"[ERROR] A Not allowed system call: runid:%s callid:%llu\n",
+			sprintf(error,"[ERROR] A Not allowed system call: runid:%s callid:%d\n",
 						outfile.c_str(), reg.REG_SYSCALL);
 			printf("%s\n",error);
 			printRuntimeError(error);
