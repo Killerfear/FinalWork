@@ -106,6 +106,39 @@ void initSyscallsLimits()
 	#ifdef SYS_exit_group
 		setCallCount(SYS_exit_group, 1);
 	#endif
+
+	#ifdef SYS_time
+		setCallCount(SYS_time, 1);
+	#endif
+	#ifdef SYS_open
+		setCallCount(SYS_open, -1);
+	#endif
+	#ifdef SYS_close
+		setCallCount(SYS_close, -1);
+	#endif
+
+	#ifdef SYS_munmap
+		setCallCount(SYS_munmap, -1);
+	#endif
+
+	#ifdef SYS_mprotect
+		setCallCount(SYS_mprotect, -1);
+	#endif
+
+	#ifdef SYS_mmap2
+		setCallCount(SYS_mprotect, -1);
+	#endif
+
+	#ifdef SYS_fstat64
+		setCallCount(SYS_fstat64, -1);
+	#endif
+
+	#ifdef SYS_set_thread_area
+		setCallCount(SYS_set_thread_area, -1);
+	#endif
+
+	setCallCount(252, 2);
+
 }
 
 //getParameters(args, workDir, fullPath, memLimit, timeLimit, judgeType);
