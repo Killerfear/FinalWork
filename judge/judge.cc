@@ -126,7 +126,7 @@ void initSyscallsLimits()
 	#endif
 
 	#ifdef SYS_mmap2
-		setCallCount(SYS_mprotect, -1);
+		setCallCount(SYS_mmap2, -1);
 	#endif
 
 	#ifdef SYS_fstat64
