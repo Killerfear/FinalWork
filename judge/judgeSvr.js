@@ -1,10 +1,14 @@
+'use strict'
+
+
 var co = require('co');
-var _ = require('underscore');
+var _ = require('lodash');
 var child_process = require('child_process');
 var fs = require('fs');
 var cluster = require('cluster');
-var numCPUs = 1;//require('os').cpus().length;
+var numCPUs = require('os').cpus().length;
 var mongo = require('../lib/mongo-extend');
+var DB = require('../lib/mongoose-schema');
 var judge = require('../judge/build/Release/judge');
 var bluebird = require('bluebird');
 
@@ -23,31 +27,40 @@ var OJ_AC = 8;
 var OJ_WA = 9;
 var OJ_PE = 10;
 
-var OJ_RESULT = ['Pending', 'Compiling', 'Runing', 'Compile Error', 'Runtime Error', 'Memory Limit Exceed', 'Time Limit Exceed', 'Output Limit Exceed', 'Accept', 'Wrong Answer', 'Presentation Error' ];
+var OJ_RESULT = require('../lib/global').OJ_RESULT;
 
 
-var compile = co.wrap(function * (srcCode) {
+var compile = function * (srcCode) {
 	//child_process.execSync("echo -e \"" + srcCode + "\" > Main.cc");
-	yield fs.writeFileAsync("Main.cc", srcCode, { encoding: "utf8" });
+	console.log('compiling');
+	fs.writeFileSync("Main.cc", srcCode, { encoding: "utf8" });
+	console.log('writeFileAsync');
 	var options = {
 		timeout: 60 * 1000, //60s
 		maxBuffer: 100 * 1024, 	//100KB
 		encoding: "utf8"
 	};
-	var res  = yield new Promise(function(resolve, reject) {
-		child_process.exec("g++ -Wall -Werror Main.cc -o Main -lm -O3 -DONLINE_JUDGE --static", function(err, stdout, stderr) {
-			resolve(stderr.toString());
+
+	return new Promise(function(resolve, reject) {
+			if (fs.existsSync("Main")) {
+				fs.unlinkSync("Main");
+			}
+			console.log("exec");
+			child_process.exec("g++ -Wall -std=c++11 Main.cc -o  Main -lm -O2 -DONLINE_JUDGE --static", function(err, stdout, stderr) {
+				if (fs.existsSync("Main")) {
+					resolve("");
+				}
+				resolve(stderr);
+			});
 		});
-	});
-	
-	return res;
-});
+};
 
 if (cluster.isMaster) {
 	//master
 
 	process.chdir(__dirname);
-	//child_process.execSync("rm -rf run*");
+	console.log(__dirname);
+	child_process.execSync("rm -rf run*");
 
 	var workers = [];
 	for (var i = 0; i < numCPUs; ++i) {
@@ -60,54 +73,74 @@ if (cluster.isMaster) {
 		console.log("connected....");
 		socket.on('judge', function (submit) {
 			console.log("judging....");
-			var worker = _.min(workers, function(data) { return data.used; });
+			var worker = _.minBy(workers, function(data) { return data.used; });
+			//console.log(worker);
 			++worker.used;
 			worker.worker.send(submit);
 		});
 	});
 
 	cluster.on('message', function(resp) {
-		var pid = resp.pid;
-		console.log(pid, ":", "finish");
-		console.log(workers);
-		var worker = _.find(workers, function(data) { return data.worker.process.pid == pid; });
-		--worker.used;
+		if (resp.pid) {
+			var pid = resp.pid;
+			console.log(pid, ":", "finish");
+			//console.log(workers);
+			var worker = _.find(workers, function(data) { return data.worker.process.pid == pid; });
+			--worker.used;
+		}
 	});
 } else {
 	//worker
+	//require('../app.js');
 	var workDir = __dirname + "/run" + process.pid;
-	child_process.execSync("mkdir " + workDir); 
+	child_process.execSync("mkdir " + workDir);
 	process.chdir(workDir);
 
 	process.on('message', co.wrap(function * (submit) {
+		child_process.execSync("rm -f Main data.in error.out Main.cc user.out");
+
 		var fullPath = __dirname + "/../problem/" + submit.problemId;
 		var user = submit.user;
-		
+
 		console.log(submit.problemId);
-		var problemInfo = yield mongo.findOne("Problem", { _id: submit.problemId });
-		console.log(problemInfo);
-		submit.memLimit = problemInfo.memLimit;
-		submit.timeLimit = problemInfo.timeLimit;
-		yield mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set: { result: OJ_RESULT[OJ_COMPILE] } });
-		var ce = yield compile(submit.srcCode);
+
+		console.log("1");
+		console.log(submit);
+		var solution = yield DB.Solution.findOne({ solutionId: submit.solutionId });
+		solution.result = OJ_COMPILE;
+
+		console.log("2");
+
+		var ce = yield [compile(submit.srcCode), solution.save()][0];
+			console.log(ce);
 
 		if (ce) {
-			yield mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set: { result: OJ_RESULT[OJ_CE], ceInfo: ce } });
+			solution.result = OJ_CE;
+			solution.error = ce;
+			yield solution.save();
+
 		} else {
-			var wait = mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set: { result: OJ_RESULT[OJ_RUNNING] } });
+			solution.result = OJ_RUNNING;
+			yield solution.save();
+
 			console.log("Start Judging");
 			var judgeResult = judge.judge(workDir, fullPath, submit.memLimit, submit.timeLimit, submit.judgeType);
-			judgeResult.result = OJ_RESULT[judgeResult.result];
+
 			console.log("Judge finish");
 			console.log("result:", judgeResult);
 
+			solution = _.assign(solution, judgeResult);
+			console.log(solution);
+			var wait = [];
+			wait.push(solution.save());
 
-			yield wait;
-			wait = [];
-			wait.push(mongo.findOneAndUpdate('Solution', { _id: submit.solutionId }, { $set:  judgeResult  }));
-			
-			if (judgeResult.result == OJ_RESULT[OJ_AC]) {
-				wait.push(mongo.findOneAndUpdate('User', { _id: user._id }, { $addToSet: { solved: submit.problemId } }));
+			var pos;
+			if (judgeResult.result == OJ_AC &&
+				user.solved[pos = _.sortedIndex(user.solved, submit.problemId)] != submit.problemId) {
+				console.log(pos);
+				user.solved.splice(pos, 0, submit.problemId);
+				wait.push(DB.User.findOneAndUpdate({ username : user.username }, { solved: user.solved }));
+				wait.push(DB.Problem.findOneAndUpdate({ problemId: submit.problemId }, { $inc: { solvedNum: 1 }}));
 			}
 
 			yield wait;
@@ -116,6 +149,3 @@ if (cluster.isMaster) {
 		process.send({ pid: process.pid});
 	}));
 }
-
-
-

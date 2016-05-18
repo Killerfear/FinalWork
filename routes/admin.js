@@ -3,9 +3,13 @@ var router = express.Router();
 var co = require("co");
 var fs = require("fs");
 var _ = require("underscore");
+var multipart = require('connect-multiparty');
+
+/*
 var multer = require("multer");
-var redis = require("../lib/redis-extend");
 var upload = multer({dest: "uploads/" });
+*/
+var redis = require("../lib/redis-extend");
 var bluebird = require("bluebird");
 var path = require("path");
 var child_process = require("child_process");
@@ -20,26 +24,40 @@ bluebird.promisifyAll(child_process);
 router.get("*", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
-		if (!user.isAdmin) return next({ message: "无权限" });
+		if (!user || !user.isAdmin) throw { message: "无权限" };
 		next();
 	}));
 });
 
 //管理员主页 类似题目列表页面
-router.get("/", function(req, res, next) {
+router.get("/problem/list/:page", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var page = parseInt(req.query.page);
+		var page = parseInt(req.params.page);
 		var skip = 50 * (page - 1);
 		var limit = 50;
 
-		var problems = yield DB.Problem.find()
-														  .sort("problemId")
-															.skip(skip)
-															.limit(limit)
-															.exec();
-		var problemCount = (yield DB.Problem.stats()).count;
+		console.log("find");
 
-		return { page: "admin-main", problems: problems, problemNum : problemCount, username: req.user.username }
+
+		var promises = yield [ DB.Problem.find()
+														  .sort("problemId")
+															.select("-_id title problemId")
+															.skip(skip)
+															.limit(limit),
+													 DB.Problem.count()
+												]
+
+		var problems = promises[0];
+		var problemCount = promises[1];
+
+
+		console.log("return");
+
+		return {
+			result: "success",
+			problems: problems,
+			problemCount: problemCount
+		}
 	}));
 });
 
@@ -63,33 +81,51 @@ router.get("/problem/edit", function(req, res, next) {
 });
 
 
+router.get('/problem/data', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var problemId = parseInt(req.query.problemId);
+		var problem = yield DB.Problem.findOne({ problemId: problemId })
+																  .select('-_id problemId title timeLimit memLimit isHidden description input output sampleInput sampleOutput judgeType');
+		return {
+			problem: problem
+		}
+	}));
+});
+
 //新增题目描述
 router.post("/problem/add", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var param = req.body;
+		var problem = req.body.problem;
 
-		var sampleInput = param.sampleInput;
-		var sampleOutput = param.sampleOutput;
+		const igBlankLine = 1 << 0;
+		const igTraillingSpace = 1 << 1;
+		const igHeadingSpace = 1 << 2;
+		const igSpaceAmount = 1 << 3;
 
-		var id = yield redis.incrAsync("problemCount");
-		console.log(id);
+		if (problem.igBlankLine) problem.judgeType |= igBlankLine;
+		if (problem.igTraillingSpace) problem.judgeType |= igTraillingSpace;
+		if (problem.igHeadingSpace) problem.judgeType |= igHeadingSpace;
+		if (problem.igSpaceAmount) problem.judgeType |= igSpaceAmount;
 
-		var path = "./problem/" + id;
+		problem = new DB.Problem(problem);
+		problem = yield problem.save();
+		console.log(problem);
 
-		yield fs.mkdirAsync(path, 600);
+		var sampleInput = problem.sampleInput;
+		var sampleOutput = problem.sampleOutput;
 
-		var problem = _.pick(param,
-			"title", "description", "input", "output", "sampleInput", "sampleOutput", "isHidden",
-			"timeLimit", "memLimit");
-		problem._id = id;
+		var id = problem.problemId;
+
+		var filePath = path.join(__dirname, "../problem/", id.toString());
+
+		yield fs.mkdirAsync(filePath);
 
 		yield [
-			fs.writeFileAsync(path + "/sample.in", sampleInput, "utf-8"),
-			fs.writeFileAsync(path + "/sample.out", sampleOutput, "utf-8"),
-			mongo.addOne("Problem", problem)
+			fs.writeFileAsync(filePath + "/sample.in", sampleInput, "utf-8"),
+			fs.writeFileAsync(filePath + "/sample.out", sampleOutput, "utf-8")
 		]
 
-		res.redirect("edit");
+		return {};
 	}));
 });
 
@@ -97,27 +133,51 @@ router.post("/problem/add", function(req, res, next) {
 router.post("/problem/update", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 
-		var setter = _.pick(req.body,
-			"title", "description", "input", "output", "sampleInput", "sampleOutput", "isHidden",
-			"timeLimit", "memLimit");
+		console.log("Start");
+		var problem = req.body.problem;
 
-		var problemId = parseInt(req.body.problemId);
-		if (isNaN(problemId)) throw { message: "参数不合法" }
+		var problemId = parseInt(problem.problemId);
+		if (problemId != problem.problemId) throw { message: "参数不合法" }
 
-		var arr = [ mongo.findOneAndUpdate("Problem", { _id: problemId }, { $set: setter }) ];
+		const igBlankLine = 1 << 0;
+		const igTraillingSpace = 1 << 1;
+		const igHeadingSpace = 1 << 2;
+		const igSpaceAmount = 1 << 3;
 
-		var path = "./problem/" + problemId;
+		problem.judgeType = 0;
 
-		if (setter.sampleInput) {
-			arr.push(fs.writeFileAsync(path + "/sample.in", setter.sampleInput, "utf-8"));
+		if (problem.igBlankLine) problem.judgeType |= igBlankLine;
+		if (problem.igTraillingSpace) problem.judgeType |= igTraillingSpace;
+		if (problem.igHeadingSpace) problem.judgeType |= igHeadingSpace;
+		if (problem.igSpaceAmount) problem.judgeType |= igSpaceAmount;
+
+		console.log(problem);
+		console.log('problemId:', problemId);
+		var updateRes = yield DB.Problem.findOneAndUpdate({ problemId: problemId }, problem, { new : true });
+
+		if (updateRes) {
+			updateRes = updateRes.toObject();
 		}
 
-		if (setter.sampleOutput) {
-			arr.push(fs.writeFileSync(path + "/sample.out", setter.sampleOutput, "utf-8"));
+		console.log(updateRes);
+
+		var filePath = path.join(__dirname, "../problem/", problemId.toString());
+
+		var cacheProblem = yield redis.getAsync('problem' + problemId);
+
+		if (cacheProblem) {
+			updateRes = _.omit(updateRes, "_id");
+			yield redis.setAsync("problem" + problemId, JSON.stringify(updateRes));
+			yield redis.expireAsync("problem" + problemId, 60 * 10);
 		}
 
-		yield arr;
-		res.redirect("back");
+
+		yield [
+			fs.writeFileAsync(filePath + "/sample.in", problem.sampleInput, "utf-8"),
+			fs.writeFileAsync(filePath + "/sample.out", problem.sampleOutput, "utf-8")
+		]
+
+		return {};
 	}));
 });
 
@@ -125,23 +185,32 @@ router.post("/problem/update", function(req, res, next) {
 router.get("/problem/delete", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var problemId = parseInt(req.query.problemId);
-		var path = __dirname + "/problem" + parseInt(req.query.problemId);
+		if (problemId.toString() != req.query.problemId) {
+			return next({message : "problemId 参数有误" })
+		}
+
+		var problemPath = path.join(__dirname, "../problem", problemId.toString());
+		console.log("Deleted Problem Path:", problemPath);
 		yield [
-			mongo.findOneAndDelete("Problem", { _id: problemId }),
-			child_process.execAsync("rm -rf "+ path)
+			DB.Problem.findOneAndRemove({ problemId: problemId }),
+			child_process.execAsync("rm -rf "+ problemPath)
 		]
-		res.redirect("back");
+		return {
+			result: "success"
+		}
 	}));
 });
 
 //获取题目数据列表
-router.get("/samplelist", function(req, res, next) {
+router.get("/problem/data/list", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		if (!user.isAdmin) throw { message: "无权限" }
-
 		var problemId = req.query.problemId;
-		var filePath = path.resolve("problem", problemId);
+		if (problemId != parseInt(problemId).toString()) {
+			throw { message: "problemId 参数不对" };
+		}
+
+		var filePath = path.join(__dirname, "../problem", problemId);
+		console.log("filePath:", filePath);
 		var files = yield fs.readdirAsync(filePath);
 
 		if (!_.isArray(files)) throw files;
@@ -154,78 +223,90 @@ router.get("/samplelist", function(req, res, next) {
 
 		dataFile.sort();
 
-		return { page:"admin-data", file: dataFile };
+		for (var i in dataFile) {
+			var name = dataFile[i];
+			filePath = path.join(__dirname, "../problem", problemId, name);
+			var fileStat = yield fs.lstatAsync(filePath);
+
+			var size = fileStat.size;
+			if (size > (1 << 20)) size = (size  >> 20) + " MB";
+			else if (size > (1 << 10)) size = (size >> 10)  + " KB";
+			else size = size + " B";
+			dataFile[i] = { fileName: name, fileSize: size };
+		}
+
+		return {
+			files: dataFile
+		}
 	}));
 });
 
 //获取题目数据
-router.get("/sample", function(req, res, next) {
+router.get("/problem/testdata", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		if (!user.isAdmin) throw { message: "无权限" };
-
 		var problemId = req.query.problemId;
 		var fileName = req.query.fileName;
 
-		var filePath = path.resolve("problem", problemId, fileName);
+		var filePath = path.join(__dirname, "../problem", problemId, fileName);
 
 		if (!fs.existsSync(filePath)) throw { message: filePath + " 不存在" }
 
 		var text = yield fs.readFileAsync(filePath, "utf8");
 
 		return {
-			page: "admin-edit-data",
-			fileName: fileName,
-			text: text,
-			problemId: problemId
+			data: {
+				fileName: fileName,
+				text: text,
+				problemId: problemId
+			}
 		};
 	}));
 
 });
 
 //添加题目测试数据
-router.post("/sample/add", upload.single("file"), function(req, res, next) {
+router.post("/problem/testdata/upload", multipart(), function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var file = req.file;
-		console.log(file);
-		if (!file) throw { message: "参数缺失" }
+		var files = req.files.file;
+		console.log(files);
+		if (!files || files.length == 0) throw { message: "参数缺失" }
+		console.log("OK");
 
-		var user = req.user;
-		console.log(user);
-		if (!user.isAdmin) throw { message: "无权限" }
+		var basePath = path.join(__dirname, "../problem", req.query.problemId);
+		console.log(basePath);
+		for (var i in files) {
+			var file = files[i];
+			var filePath = path.join(basePath, file.originalFilename);
+			console.log(filePath);
+			var data = yield fs.readFileAsync(file.path);
+			yield [ fs.writeFile(filePath, data), fs.unlink(file.path) ];
+		}
 
-		var path = './problem/' + req.query.problemId + '/' + file.originalname;
-		console.log(path);
-
-		yield fs.renameAsync(file.path, path);
-
-		return { json: {} }
+		return {};
 	}));
 });
 
 //修改题目测试数据
-router.post("/sample/update", function(req, res, next) {
+router.post("/problem/testdata", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
+		console.log(req.body);
+		var problemId = req.body.data.problemId;
+		var fileName = req.body.data.fileName;
+		var data = req.body.data.text;
 
-		if (!user.isAdmin) throw { message: "无权限" }
+		console.log("zzz");
+		if (parseInt(problemId).toString() != problemId) throw { message: "problemId 参数错误" };
+		if (!fileName.match(/^[^/]*.(in|out)$/)) throw { message: "fileName 参数错误" }
 
-		var problemId = req.body.problemId;
-		var fileName = req.body.fileName;
-		var data = req.body.data;
+		var filePath = path.join(__dirname, "../problem", problemId, fileName);
+		console.log(filePath);
 
-		var filePath = path.resolve("problem", problemId, fileName);
+		console.log("yyy");
+		if (!fs.existsSync(filePath))  throw { message: "文件不存在" }
 
-		var err;
-		if (fs.existsSync(filePath)) {
-			yield fs.writeFileAsync(filePath, data, "utf-8");
-		} else {
-			err = { message: "文件不存在" };
-		}
+		yield fs.writeFileAsync(filePath, data, "utf-8");
 
-		if (err) throw err;
-
-		res.redirect("back");
+		return {};
 	}));
 });
 
@@ -234,81 +315,123 @@ router.post("/sample/update", function(req, res, next) {
 
 
 //删除题目测试数据
-router.get("/sample/delete", function(req, res, next) {
+router.delete("/problem/testdata", function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-
-		if (!user.isAdmin) throw { message: "无权限" }
 
 		var problemId = req.query.problemId;
 		var fileName = req.query.fileName;
 
-		var filePath = path.resolve("problem", problemId, fileName);
-		var err = fs.unlinkSync(filePath);
+		if (parseInt(problemId).toString() != problemId) throw { message: "problemId 参数错误" };
+		if (!fileName.match(/^[^/]*.(in|out)$/)) throw { message: "fileName 参数错误" }
 
-		if (err) throw { message: "删除文件失败", err: err };
+		var filePath = path.join(__dirname, "../problem", problemId, fileName);
+		yield fs.unlinkAsync(filePath);
 
-		res.redirect('/admin/samplelist?problemId=' + problemId);
+		return {};
 	}));
 });
 
 
 /*******************************比赛相关*********************************/
 
-//获取比赛数据
-router.get('/contest/list', function(req, res, next) {
+//获取比赛列表
+router.get('/contest/list/:page', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var contests = yield mongo.find("Contest", {});
-		return {
-			json: {
-				contests: contests
-			}
+		var page = parseInt(req.params.page);
+		var limit = 50;
+		var skip = (page - 1) * limit;
+		var contests = yield DB.Contest.find()
+													 .skip(skip)
+													 .limit(limit)
+													 .sort("-contestId")
+
+	  var contestCount = yield redis.getAsync('contestCount');
+
+    return {
+			contests: contests,
+			contestCount: contestCount
 		}
 	}));
 });
 
 //创建比赛
-router.post('/contest/edit', function(req, res, next) {
+router.put('/contest', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 
-		var param = req.body;
-		var contest = _.pick(param, 'title', 'problemId', 'isPrivate', 'startTime', 'endTime', 'isHidden', 'authorizee');
+		var contest = new DB.Contest(req.body.contest);
 
-		yield mongo.insert('Contest', contest);
+		if (contest.startTime > contest.endTime) throw { message: "开始时间比结束时间晚" };
+		if (contest.startTime < 0) throw { message : "开始时间范围不对" };
 
-		return { title: req.baseUrl + req.path };
+		var problemIds = req.body.contest.problemId;
+		if (problemIds.length > 26) throw { message: "题目数量超过限制" };
+
+		for (var i in problemIds) {
+			var problemId = problemIds[i];
+			var problem = yield DB.Problem.findOne({ problemId: problemId }, "-_id -isHidden");
+			if (!problem) throw { message: "题目 " + problemId + " 不存在" }
+			contest.problems.push(problem);
+		}
+
+		yield contest.save();
+		return {};
 	}));
 });
 
-//编辑比赛
-router.post('/contest/edit/update',function(req, res, next) {
+//修改比赛
+router.post('/contest/data',function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		if (!user.isAdmin) throw { message: "无权限" }
+		var contest = req.body.contest;
+		if (contest.startTime > contest.endTime) throw { message: "开始时间比结束时间晚" };
+		if (contest.startTime < 0) throw { message : "开始时间范围不对" };
 
-		var param = req.body;
-		var contestId = ObjectID(param.contestId);
+		var problemIds = req.body.contest.problemId;
+		if (problemIds.length > 26) throw { message: "题目数量超过限制" };
 
-		var setter = _.pick(param, 'title', 'problemId', 'isPrivate', 'startTime', 'endTime', 'isHidden', 'authorizee');
+		contest.problems = [];
 
-		var doc = yield mongo.findOneAndUpdate('Contest', { _id: contestId }, { $set: setter , returnOriginal : false });
+		for (var i in problemIds) {
+			var problemId = problemIds[i];
+			var problem = yield DB.Problem.findOne({ problemId: problemId }, "-_id -isHidden");
+			if (!problem) throw { message: "题目 " + problemId + " 不存在" }
+			contest.problems.push(problem);
+		}
 
-		return { title :  doc };
+		var doc = yield DB.Contest.findOneAndUpdate({ contestId: contest.contestId }, contest);
+		if (!doc) throw { message: "比赛不存在" };
+		return {};
 	}));
 });
+
+//获取比赛数据
+router.get('/contest/data', function(req, res, next) {
+	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var contest = yield DB.Contest.findOne({ contestId: parseInt(req.query.contestId) })
+																	.select("-_id");
+		if (!contest) throw { message: "比赛不存在" };
+
+		contest = contest.toObject();
+		var problemId = [];
+		for (var i in contest.problems) {
+			problemId.push(contest.problems[i].problemId);
+		}
+
+		contest.problemId = problemId;
+		contest = _.omit(contest, "problems");
+		return {
+			contest: contest
+		}
+	}))
+})
 
 //删除比赛
-router.get('/contest/edit/delete', function(req, res, next) {
+router.get('/contest/delete', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		var user = req.user;
-		if (!user.isAdmin) throw { message: "无权限" }
+		var contestId = parseInt(req.query.contestId);
 
-		var param = req.query;
-		var contestId = ObjectID(param.contestId);
+		yield DB.Contest.findOneAndRemove({ contestId: contestId });
 
-		var result = yield mongo.findOneAndDelete("Contest", { _id: contestId });
-
-		return { title : result }
+		return {};
 	}));
 });
 

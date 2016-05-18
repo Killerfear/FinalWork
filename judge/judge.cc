@@ -10,6 +10,8 @@
 #include <time.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <fstream>
+#include <iostream>
 #include <sys/wait.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
@@ -25,8 +27,7 @@
 #include <string>
 
 using namespace v8;
-using std::vector;
-using std::string;
+using namespace std;
 
 const int STD_MB = 1048576;
 const int STD_T_LIM = 2;
@@ -46,6 +47,12 @@ const int OJ_AC = 8;
 const int OJ_WA = 9;
 const int OJ_PE = 10;
 
+const int igBlankLine = 1 << 0;
+const int igTraillingSpace = 1 << 1;
+const int igHeadingSpace = 1 << 2;
+const int igSpaceAmount = 1 << 3;
+
+
 const int use_max_time = 0;
 
 
@@ -63,14 +70,9 @@ const int use_max_time = 0;
 #endif
 
 
-int LANG_CV[256]=
-#if __WORDSIZE == 64
-	{SYS_time,SYS_read, SYS_uname, SYS_write, SYS_open, SYS_close, SYS_execve, SYS_access, SYS_brk, SYS_munmap, SYS_mprotect, SYS_mmap, SYS_fstat, SYS_set_thread_area, 252,0};
-#else
-	{SYS_time,SYS_read, SYS_uname, SYS_write, SYS_open, SYS_close, SYS_execve, SYS_access, SYS_brk, SYS_munmap, SYS_mprotect, SYS_mmap2, SYS_fstat64, SYS_set_thread_area, 252,0};
-#endif
+int LANG_CV[256] = {SYS_arch_prctl, SYS_readlink, SYS_execve, SYS_uname, SYS_brk,SYS_access, SYS_fstat, SYS_mmap, SYS_write, SYS_exit_group, 0};
 
-int LANG_CC[256]={1,-1,-1,-1,-1,-1,1,-1,-1,1,-1,-1,-1,-1,2,0};
+int LANG_CC[256]={-1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 0};
 
 int call_counter[512];
 
@@ -85,9 +87,9 @@ void initSyscallsLimits()
 
 }
 
-//getParameters(args, workDir, fullPath, memLimit, timeLimit, isspj);
+//getParameters(args, workDir, fullPath, memLimit, timeLimit, judgeType);
 void getParameters(const FunctionCallbackInfo<Value>& args, string & workDir, string & fullPath,
-						  int & memLimit, int & timeLimit, int & isspj)
+						  int & memLimit, int & timeLimit, int & judgeType)
 {
 	Isolate* isolate = args.GetIsolate();
 	//solutionId, [files], problem_id
@@ -97,15 +99,9 @@ void getParameters(const FunctionCallbackInfo<Value>& args, string & workDir, st
 		return;
 	}
 
-	/*if (!args[0]->IsString() || !args[1]->IsString() || !args[2]->IsNumber()
-			|| !args[3]->IsNumber() || !args[4]->IsNumber()) {
-		isolate->ThrowException(Exception::TypeError(
-		        String::NewFromUtf8(isolate, "Wrong arguments")));
-	}*/
-
 	memLimit = args[2]->NumberValue();
 	timeLimit = args[3]->NumberValue();
-	isspj = args[4]->NumberValue();
+	judgeType = args[4]->NumberValue();
 
 	workDir = *String::Utf8Value((args[0]->ToString()));
 	fullPath = *String::Utf8Value((args[1]->ToString()));
@@ -176,7 +172,7 @@ int isInFile(const char fname[])
 		return l - 3;
 }
 
-void prepareFiles(const char * filename, int namelen, const string & fullPath, const string &  workDir, 
+void prepareFiles(const char * filename, int namelen, const string & fullPath, const string &  workDir,
 						string & infile, string & outfile, string & userfile)
 {
 	//              printf("ACflg=%d %d check a file!\n",ACflg,solutionId);
@@ -192,23 +188,15 @@ void prepareFiles(const char * filename, int namelen, const string & fullPath, c
 
 void runSolution(const string & workDir, int & timeLimit, int & usedtime, int & memLimit)
 {
-	puts("1");
 	assert(nice(19) != -1);
 	// now the user is "judger"
-	puts("2");
 	assert(chdir(workDir.c_str()) == 0);
-	puts("3");
 	// open the files
 	assert(freopen("data.in", "r", stdin) != NULL);
 	assert(freopen("user.out", "w", stdout) != NULL);
 	assert(freopen("error.out", "a+", stderr) != NULL);
-	puts("4");
-	// trace me
-	puts("ptrace...");
-	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 	// run me
 	assert(chroot(workDir.c_str()) == 0);
-	puts("chroot...");
 
 	while(setgid(65534)!=0) sleep(1);
 	while(setuid(65534)!=0) sleep(1);
@@ -242,27 +230,27 @@ void runSolution(const string & workDir, int & timeLimit, int & usedtime, int & 
 	LIM.rlim_max = STD_MB *memLimit*2;
 	setrlimit(RLIMIT_AS, &LIM);
 
+	// trace me
+	ptrace(PTRACE_TRACEME, 0, NULL, NULL);
 
-	printf("Running...");
+	//printf("Running...");
 	execl("./Main", "./Main", (char *)NULL);
-	printf("Running finish");
+	//printf("Running finish");
 	exit(0);
 }
 
 
-void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int isspj,
-		const string & userfile, const string & outfile, int & topmemory, int memLimit, 
+void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int judgeType,
+		const string & userfile, const string & outfile, int & topmemory, int memLimit,
 		int & usedtime, int timeLimit, int & PEflg, const string & workDir)
 {
 	// parent
+	//printf("Watch pid[%d]\n", pidApp);
 	int tempmemory;
-	int sub_level=0;
 
 	int status, sig, exitcode;
 	struct user_regs_struct reg;
 	struct rusage ruse;
-	int sub = 0;
-	pid_t subwatcher=0;
 	while (1)
 	{
 		// check the usage
@@ -275,9 +263,11 @@ void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int isspj,
 			topmemory = tempmemory;
 		if (topmemory > memLimit * STD_MB)
 		{
+			printf("MLE: %d\n", __LINE__);
 			if (ACflg == OJ_AC)
 				ACflg = OJ_MLE;
-			ptrace(PTRACE_KILL, pidApp, NULL, NULL);
+
+			kill(pidApp, SIGKILL);
 			break;
 		}
 		//sig = status >> 8;/*status >> 8 Ã¥Â·Â®Ã¤Â¸ÂÃ¥Â¤Å¡Ã¦ËÂ¯EXITCODE*/
@@ -288,20 +278,19 @@ void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int isspj,
 		{
 			ACflg = OJ_RE;
 			//addreinfo(solution_id);
-			ptrace(PTRACE_KILL, pidApp, NULL, NULL);
+			kill(pidApp, SIGKILL);
 			break;
 		}
 
-		if (!isspj && getFileSize(userfile.c_str()) > getFileSize(outfile.c_str()) * 2+1024)
+		if (!judgeType && getFileSize(userfile.c_str()) > getFileSize(outfile.c_str()) * 2+1024)
 		{
 			ACflg = OJ_OL;
-			ptrace(PTRACE_KILL, pidApp, NULL, NULL);
+			kill(pidApp, SIGKILL);
 			break;
 		}
 
 		exitcode = WEXITSTATUS(status);
-		/*exitcode == 5 waiting for next CPU allocation          * ruby using system to run,exit 17 ok
-		 *  */
+		/*exitcode == 5 waiting for next CPU allocation */
 		if (exitcode == 0x05 || exitcode == 0)
 			//go on and on
 			;
@@ -329,7 +318,8 @@ void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int isspj,
 				}
 				printRuntimeError(strsignal(exitcode));
 			}
-			ptrace(PTRACE_KILL, pidApp, NULL, NULL);
+
+			kill(pidApp, SIGKILL);
 
 			break;
 		}
@@ -367,15 +357,15 @@ void watchSolution(pid_t pidApp, const string & infile, int & ACflg, int isspj,
 			}
 			break;
 		}
-		/*     comment from http://www.felix021.com/blog/read.php?1662
-WIFSTOPPED: return true if the process is paused or stopped while ptrace is watching on it
-WSTOPSIG: get the signal if it was stopped by signal
-		 */
+		/*
+		WIFSTOPPED: return true if the process is paused or stopped while ptrace is watching on it
+		WSTOPSIG: get the signal if it was stopped by signal
+		*/
 
 		// check the system calls
 		ptrace(PTRACE_GETREGS, pidApp, NULL, &reg);
 
-		if (false&&reg.REG_SYSCALL>0&&call_counter[reg.REG_SYSCALL] == 0)   //do not limit JVM syscall for using different JVM
+		if (reg.REG_SYSCALL>0&&call_counter[reg.REG_SYSCALL] == 0)
 		{
 			ACflg = OJ_RE;
 
@@ -384,137 +374,167 @@ WSTOPSIG: get the signal if it was stopped by signal
 						outfile.c_str(), reg.REG_SYSCALL);
 			printf("%s\n",error);
 			printRuntimeError(error);
-			ptrace(PTRACE_KILL, pidApp, NULL, NULL);
-			//   wait4(pidApp,NULL,0,NULL);
+			kill(pidApp, SIGKILL);
+			break;
 		}
 		else
 		{
-			if (sub == 1 && call_counter[reg.REG_SYSCALL] > 0)
+			if (call_counter[reg.REG_SYSCALL] > 0)
 				call_counter[reg.REG_SYSCALL]--;
 
-
-			if(reg.REG_SYSCALL==SYS_fork||reg.REG_SYSCALL==SYS_clone||reg.REG_SYSCALL==SYS_vfork)//
-			{
-				if(sub_level>3&&sub==1)
-				{
-					printf("sub are not allowed to fork!\n");
-					ptrace(PTRACE_KILL, pidApp, NULL, NULL);
-
-				}
-				else
-				{
-					//printf("syscall:%ld\t",regs.REG_SYSCALL);
-					ptrace(PTRACE_SINGLESTEP, pidApp,NULL, NULL);
-
-					ptrace(PTRACE_GETREGS, pidApp,
-							NULL, &reg);
-					//printf("pid=%lu\n",regs.eax);
-					pid_t subpid=reg.REG_RET;
-					if(subpid>0&&subpid!=subwatcher)
-					{
-						//ptrace(PTRACE_ATTACH, subpid,               NULL, NULL);
-						//wait(NULL);
-
-						subwatcher=fork();
-						if(subwatcher==0)
-						{
-							//total_sub++;
-							sub_level++;
-							pidApp=subpid;
-							int success=ptrace(PTRACE_ATTACH, pidApp,
-									NULL, NULL);
-							if(success==0)
-							{
-								wait(NULL);
-								printf("attatched sub %d->%d\n",getpid(),pidApp);
-
-								// ptrace(PTRACE_SYSCALL, traced_process,NULL, NULL);
-							}
-							else
-							{
-								//printf("not attatched sub %d\n",traced_process);
-
-								exit (0);
-							}
-						}
-
-
-
-					}
-				}
-				reg.REG_SYSCALL=0;
-
-			}
 		}
-		sub = 1 - sub;
 
 		ptrace(PTRACE_SYSCALL, pidApp, NULL, NULL);
 	}
+
+	//wait for defunct process
+	wait4(-1, NULL, 0, NULL);
+
 	usedtime += (ruse.ru_utime.tv_sec * 1000 + ruse.ru_utime.tv_usec / 1000);
 	usedtime += (ruse.ru_stime.tv_sec * 1000 + ruse.ru_stime.tv_usec / 1000);
-	if(sub_level) exit(0);
-	//clean_session(pidApp);
 }
 
 
-void delnextline(char s[])
+bool isBlankLine(const string & s)
 {
-	int L;
-	L = strlen(s);
-	while (L > 0 && (s[L - 1] == '\n' || s[L - 1] == '\r'))
-		s[--L] = 0;
-}
-
-int compare(const char *file1, const char *file2)
-{
-	//the original compare from the first version of hustoj has file size limit
-	//and waste memory
-	FILE *f1,*f2;
-	char *s1,*s2,*p1,*p2;
-	int PEflg;
-	s1=new char[STD_F_LIM+512];
-	s2=new char[STD_F_LIM+512];
-	printf("%s %s\n", file1, file2);
-	if (!(f1=fopen(file1,"r")))
-		return OJ_AC;
-	for (p1=s1; EOF!=fscanf(f1,"%s",p1);)
-		while (*p1) p1++;
-	fclose(f1);
-	if (!(f2=fopen(file2,"r")))
-		return OJ_RE;
-	for (p2=s2; EOF!=fscanf(f2,"%s",p2);)
-		while (*p2) p2++;
-	fclose(f2);
-	if (strcmp(s1,s2)!=0)
-	{
-		//              printf("A:%s\nB:%s\n",s1,s2);
-		delete[] s1;
-		delete[] s2;
-
-		return OJ_WA;
+	for (int i = 0; i < (int)s.length(); ++i) {
+		if (!isspace(s[i])) return false;
 	}
-	else
-	{
-		f1=fopen(file1,"r");
-		f2=fopen(file2,"r");
-		PEflg=0;
-		while (PEflg==0 && fgets(s1,STD_F_LIM,f1) && fgets(s2,STD_F_LIM,f2))
-		{
-			delnextline(s1);
-			delnextline(s2);
-			if (strcmp(s1,s2)==0) continue;
-			else PEflg=1;
+	return true;
+}
+
+std::istream& safeGetline(std::istream& is, std::string& t)
+{
+    t.clear();
+
+    // The characters in the stream are read one-by-one using a std::streambuf.
+    // That is faster than reading them one-by-one using the std::istream.
+    // Code that uses streambuf this way must be guarded by a sentry object.
+    // The sentry object performs various tasks,
+    // such as thread synchronization and updating the stream state.
+
+    std::istream::sentry se(is, true);
+    std::streambuf* sb = is.rdbuf();
+
+    for(;;) {
+        int c = sb->sbumpc();
+        switch (c) {
+        case '\n':
+            return is;
+        case '\r':
+            if(sb->sgetc() == '\n')
+                sb->sbumpc();
+            return is;
+        case EOF:
+            // Also handle the case when the last line has no line ending
+            if(t.empty())
+                is.setstate(std::ios::eofbit);
+            return is;
+        default:
+            t += (char)c;
+        }
+    }
+}
+
+bool getNextLine(ifstream & fin, string & s, bool withoutBlank)
+{
+	bool has = false;
+	while (fin.peek() != EOF) {
+		getline(fin, s);
+
+		if (!withoutBlank || !isBlankLine(s)) {
+			has = true;
+			break;
 		}
-		delete [] s1;
-		delete [] s2;
-		fclose(f1);
-		fclose(f2);
-		if (PEflg) return OJ_PE;
-		else return OJ_AC;
+	}
+
+	return has;
+}
+
+void transForm(string & s, int mode)
+{
+	int l = 0, r = s.length() - 1;
+	while (r >= 0 && (s[r] == '\n' || s[r] == '\r')) --r;
+
+	if (mode & igTraillingSpace) {
+		while (r >= 0 && isspace(s[r])) --r;
+	}
+
+
+	if (mode & igHeadingSpace) {
+		while (l <= r && isspace(s[l])) ++l;
+	}
+
+	if (l != 0 || r != (int)s.length() - 1) {
+		s = s.substr(l, r - l + 1);
+	}
+
+	if (mode & igSpaceAmount) {
+		int c = 0;
+		for (int i = 0; i < (int)s.length(); ++i) {
+			s[c++] = s[i];
+			if (isspace(s[i])) {
+				while (i < (int)s.length() && isspace(s[i])) ++i;
+				--i;
+			}
+		}
+		s.erase(c);
 	}
 }
 
-void judgeSolution(int & ACflg, int & usedtime, int timeLimit, int isspj,
+
+int compareWithMode(const char * file1, const char * file2, int mode)
+{
+	ios::sync_with_stdio(false);
+	//printf("file: %s %s\n", file1, file2);
+	ifstream f1(file1, ifstream::binary | ifstream::in);
+
+	if (!f1.is_open()) {
+		return OJ_AC;
+	}
+
+	ifstream f2(file2, ifstream::binary | ifstream::in);
+
+	if (!f2.is_open()) {
+		f1.close();
+		return OJ_RE;
+	}
+
+	string s1, s2;
+
+	for(;;) {
+		bool has1 = getNextLine(f1, s1, mode & igBlankLine);
+		bool has2 = getNextLine(f2, s2, mode & igBlankLine);
+		if (!has1) f1.close();
+		if (!has2) f2.close();
+		//printf("%s %u\n%s %u\n\n", s1.c_str(), s1.length(), s2.c_str(), s2.length());
+		//printf("%d %d\n", has1, has2);
+		if (!has1 && !has2) return OJ_AC;
+		if (!has1 || !has2) return OJ_WA;
+
+		transForm(s1, mode);
+		transForm(s2, mode);
+
+		if (s1 != s2) return OJ_WA;
+	}
+}
+
+int compare(const char *file1, const char *file2, int judgeType)
+{
+	int PEflg = compareWithMode(file1, file2, ~0);
+	if (PEflg == OJ_WA) {
+		return PEflg;
+	}
+
+	PEflg = compareWithMode(file1, file2, judgeType);
+	if (PEflg == OJ_WA) {
+		PEflg = OJ_PE;
+	}
+
+	return PEflg;
+}
+
+void judgeSolution(int & ACflg, int & usedtime, int timeLimit, int judgeType,
 		const string & infile, const string & outfile, const string & userfile, int & PEflg,
 		const string & workDir, int & topmemory, int memLimit)
 {
@@ -523,20 +543,14 @@ void judgeSolution(int & ACflg, int & usedtime, int timeLimit, int isspj,
 	int comp_res = -1;
 	if (ACflg == OJ_AC && usedtime > timeLimit * 1000 * 2)
 		ACflg = OJ_TLE;
-	if(topmemory > memLimit * STD_MB) ACflg=OJ_MLE; //issues79
+	if(topmemory > memLimit * STD_MB) {
+		ACflg=OJ_MLE; //issues79
+		printf("MLE: %d\n", __LINE__);
+	}
 	// compare
 	if (ACflg == OJ_AC)
 	{
-		if (isspj)
-		{
-
-		}
-		else
-		{
-			puts("Compare Start");
-			comp_res = compare(outfile.c_str(), userfile.c_str());
-			puts("Compare Done");
-		}
+		comp_res = compare(outfile.c_str(), userfile.c_str(), judgeType);
 		if (comp_res == OJ_WA)
 		{
 			ACflg = OJ_WA;
@@ -552,10 +566,10 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
 	string workDir = "", fullPath = "";
-	int memLimit, timeLimit, isspj;
+	int memLimit, timeLimit, judgeType;
 
 	//init
-	getParameters(args, workDir, fullPath, memLimit, timeLimit, isspj);
+	getParameters(args, workDir, fullPath, memLimit, timeLimit, judgeType);
 
 	assert(chdir(workDir.c_str()) == 0);
 
@@ -591,15 +605,16 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 
 		if (pidApp == 0)
 		{
+			//exit(0) in runSolution
 			runSolution(workDir, timeLimit, usedtime, memLimit);
 		}
 		else
 		{
-			watchSolution(pidApp, infile, ACflg, isspj, userfile, outfile,
+			watchSolution(pidApp, infile, ACflg, judgeType, userfile, outfile,
 					topmemory, memLimit, usedtime, timeLimit, PEflg, workDir);
 
 
-			judgeSolution(ACflg, usedtime, timeLimit, isspj, infile, outfile,
+			judgeSolution(ACflg, usedtime, timeLimit, judgeType, infile, outfile,
 					userfile, PEflg, workDir, topmemory, memLimit);
 
 			if(use_max_time)
@@ -607,11 +622,8 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 				max_case_time=usedtime>max_case_time?usedtime:max_case_time;
 				usedtime=0;
 			}
-			printf("wwww");
-			//clean_session(pidApp);
 		}
 	}
-	puts("Finish");
 
 	if (ACflg == OJ_AC && PEflg == OJ_PE)
 		ACflg = OJ_PE;
@@ -628,20 +640,17 @@ void judge(const FunctionCallbackInfo<Value>& args) {
 		usedtime=timeLimit*1000;
 	}
 
-	printf("%d\n", ACflg);
+	//printf("%d\n", ACflg);
 
 
-	topmemory >>= 10;
-	//usedtime(ms), topmemory(kb), Acflg, 
+	//usedtime(ms), topmemory(b), Acflg,
 
 	Local<Object> judgeResult = Object::New(isolate);
 	judgeResult->Set(String::NewFromUtf8(isolate, "time"), Number::New(isolate, usedtime));
 	judgeResult->Set(String::NewFromUtf8(isolate, "memory"), Number::New(isolate, topmemory));
 	judgeResult->Set(String::NewFromUtf8(isolate, "result"), Number::New(isolate, ACflg));
 
-	puts("Return");
 	args.GetReturnValue().Set(judgeResult);
-	puts("Return....");
 	return;
 }
 

@@ -3,25 +3,17 @@ var router = express.Router();
 var co = require('co');
 var crypto = require('crypto');
 var bcrypt = require('bcrypt');
+var bluebird = require('bluebird');
 var _ = require('underscore');
 
 var User = require('../module/user');
 var LogicHandler = require('../lib/logic-handler');
 
-var legalUsername = co.wrap(function * (text) {
-	text = text.toLower();
-	for (var i = 0; i < text.length; ++i) {
-		var ch = text[i];
-		if ('a' <= ch && ch <= 'z') continue;
-		if ('0' <= ch && ch <= '9') continue;
-		if (ch == '_') continue;
-		return false;
-	}
-	return true;
-});
+bluebird.promisifyAll(bcrypt);
 
-
-function buildJson(data) { return { json: data } };
+var legalUsername = function(text) {
+	return text.match(/^[a-zA-Z\d]+(_([a-zA-Z\d])+)?$/);
+}
 
 
 //登录
@@ -38,12 +30,15 @@ router.post('/login', function(req, res, next) {
 			}
 		}
 
+		console.log('zzz');
+
 		if (req.session) req.session.regenerate(function(err) { console.log(err) });
 
-		req.session.uid = user._id;
+		req.session.uid = user.username;
 
 		req.session.save();
 		console.log(req.session);
+		console.log('yyy');
 
 		return {
 			result: "success"
@@ -55,7 +50,9 @@ router.post('/login', function(req, res, next) {
 router.get('/logout', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		req.session.destroy();
-		res.redirect('/user/login');
+		return {
+			result: "success"
+		}
 	}));
 });
 
@@ -64,13 +61,13 @@ router.post('/signup', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function *() {
 		var body = req.body;
 
-		if (!legalUsername(body.username)) return buildJson({ result: "fail", msg: "账户名格式有误" });
-		if (body.password.length < 6) return buildJson({ result: 'fail', msg: "密码长度过短" });
-		if (body.password != body.reppassword) return buildJson({ result: 'fail', msg: "密码不一致" });
+		if (!legalUsername(body.username)) throw { message: "账户名格式有误" };
+		if (body.password.length < 7) throw { message: "密码长度过短" };
+		if (body.password != body.repeatPassword) throw {  message: "密码不一致" };
 
 		var user = yield User.getByName(body.username);
 
-		if (user) return buildJson({ result : 'fail', msg: "账户已存在" });
+		if (user) return { result : 'fail', msg: "账户已存在" };
 
 		user = {};
 
@@ -78,8 +75,7 @@ router.post('/signup', function(req, res, next) {
 		user.email = body.email;
 		user.submit = [];
 		user.solved = [];
-		user.gender = body.gender;
-		user._id = body.username;
+		user.username = body.username;
 		user.password = body.password;
 		user.nickname = body.nickname;
 		user.registTime = new Date().getTime();
@@ -88,14 +84,15 @@ router.post('/signup', function(req, res, next) {
 		user.password = bcrypt.hashSync(user.password, user.salt);
 
 		yield User.create(user);
-		return buildJson({ result: 'success', msg: '注册成功'});
+		return { result: 'success' };
 	}));
 });
 
 //获取个人信息
-router.get('/profile', function(req, res, next) {
+router.get('/data', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
-		return req.user;
+		var user = req.user ? req.user.toObject() : {};
+		return _.omit(user, "salt", "password", "ip", "_id", "__v");
 	}));
 });
 
@@ -104,22 +101,53 @@ router.post('/profile', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
 		var user = req.user;
 
-		var setter = _.pick(req.body, 'nickname', 'email', 'gender');
+		if (!user) throw { message: "未登录" }
 
-		user = _.extend(user, setter);
+		var haxiPass = yield bcrypt.hashAsync(req.body.password, user.salt);
+		if (haxiPass != user.password)	{
+			return {
+				result: "fail",
+				msg: "密码错误"
+			}
+		}
 
-		return user.save();
+		if ((req.body.repeatNewPassword || req.body.newPassword) && req.body.repeatNewPassword == req.body.newPassword) {
+			return {
+				result: "fail",
+				msg: "密码不一致"
+			}
+		}
+
+		user.nickname = req.body.nickname;
+		user.email = req.body.email;
+		console.log(user);
+
+		if (req.body.newPassword) {
+			user.password = req.body.newPassword;
+			user.salt = yield bcrypt.genSaltAsync();
+			user.password = yield bcrypt.hashAsync(user.password, user.salt);
+		}
+
+		yield user.save();
+		return {
+			result : "success"
+		}
 	}));
 });
 
 //修改密码
 router.post('/profile/password', function(req, res, next) {
 	LogicHandler.Handle(req, res, next, co.wrap(function * () {
+		var user = req.user;
+
+		if (!user) {
+			throw { message: "未登录" };
+		}
+
 		var body = req.body;
 
 		if (body.newPass != body.newRepPass) throw { message: "密码不一致" }
 
-		var user = req.user;
 
 		var haxiPass = yield bcrypt.hash(body.oldPass, user.salt);
 
@@ -133,5 +161,7 @@ router.post('/profile/password', function(req, res, next) {
 		return yield user.save();
 	}));
 });
+
+
 
 module.exports = router;

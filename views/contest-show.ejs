@@ -1,0 +1,262 @@
+
+<style media="screen">
+.spinner {
+  width: 15px;
+  height: 15px;
+  margin: 0px auto;
+  background-color: #333;
+
+  border-radius: 100%;
+  -webkit-animation: sk-scaleout 1.0s infinite ease-in-out;
+  animation: sk-scaleout 1.0s infinite ease-in-out;
+}
+
+@-webkit-keyframes sk-scaleout {
+  0% { -webkit-transform: scale(0) }
+  100% {
+    -webkit-transform: scale(1.0);
+    opacity: 0;
+  }
+}
+
+@keyframes sk-scaleout {
+  0% {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+    } 100% {
+      -webkit-transform: scale(1.0);
+      transform: scale(1.0);
+      opacity: 0;
+    }
+  }
+
+  </style>
+
+<div ng-include="'/views/navbar.ejs'"> </div>
+
+<div class='container'>
+  <div class='col-md-12'>
+    <h1 class='text-center'>{{contest.title}}</h1>
+    <br />
+  </div>
+  <div class='col-md-12'>
+    <div class="active progress progress-striped">
+      <div class="progress-bar progress-bar-success" role="progressbar" style="width: {{(currentTime - contest.startTime) / (contest.endTime - contest.startTime) * 100}}%;">
+        <span ng-show="contest.startTime <= currentTime  && currentTime < contest.endTime">{{getDuration(currentTime - contest.startTime)}}</span>
+      </div>
+    </div>
+  </div>
+  <br />
+
+  <div class='col-sm-12'>
+    <uib-tabset active="activeTab">
+      <uib-tab heading='Overview' ng-click='getOverview()'>
+        <br />
+        <div class='col-sm-12'>
+          <label>Current Time:</label> {{currentTime | date: 'yyyy-MM-dd HH:mm:ss'}}
+        </div>``
+        <div class='col-sm-12'>
+          <label>Start Time:</label> {{contest.startTime | date: 'yyyy-MM-dd HH:mm:ss'}}
+        </div>
+        <div class='col-sm-12'>
+          <label>End Time:</label> {{contest.endTime | date: 'yyyy-MM-dd HH:mm:ss'}}
+        </div>
+        <div class='col-sm-12'>
+          <label>Status:</label>
+          <span class='text-success' ng-show='contest.status == 0'>Pending</span>
+          <span class='text-danger' ng-show='contest.status == 1'>Running</span>
+          <span class='text-muted' ng-show='contest.status == 2'>Finished</span>
+        </div>
+        <table class='table' ng-show="contest.isStart">
+          <thead>
+            <th></th>
+            <th></th>
+            <th>Title</th>
+            <th></th>
+          </thead>
+          <tbody>
+            <tr ng-repeat='problem in contest.problems' ng-class="{success: contest.state[problem.problemId] == 1, danger: contest.state[problem.problemId] == 2}">
+              <th>
+              </th>
+              <td >{{problem.charId}}</td>
+              <td><a href="javascript:void(0);" ng-click="chooseProblem(problem.charId)">{{problem.title}}</a></td>
+              <td ng-show='problem.submited'>{{problem.solved}}/{{problem.submited}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </uib-tab>
+      <uib-tab heading='Problems' ng-show="contest.isStart">
+        <div class='col-md-12'>
+          <div class='text-center'>
+            <ul class="pagination">
+              <li ng-repeat="problem in contest.problems" ng-class="{active : activeProblem.charId == problem.charId}">
+                <a href="javascript:void(0);" ng-click="chooseProblem(problem.charId)">
+                  {{problem.charId}}
+                </a>
+              </li>
+            </ul>
+          </div>
+          <h1 class='text-center'>{{activeProblem.title}}</h1>
+          <h4 class='text-center'>Time Limit:{{activeProblem.timeLimit * 1000}} MS Memory Limit: {{activeProblem.memLimit}} MB</h4>
+          <br />
+          <div class='text-center'>
+            <button type='button' class='btn btn-default' ng-click='open()'>Submit</button>
+            <button type='button' class='btn btn-default' ng-click='goToStatusList(true)'>Status</button>
+          </div>
+          <h2>Description</h2>
+          <div class='col-md-12' ng-bind-html='activeProblem.description'></div>
+
+          <h2>Input</h2>
+          <div class='col-md-12' ng-bind-html='activeProblem.input'></div>
+
+          <h2>Output</h2>
+          <div class='col-md-12' ng-bind-html='activeProblem.output'></div>
+
+          <h2>Sample Input</h2>
+          <pre ng-bind-html="activeProblem.sampleInput"></pre>
+
+          <h2>Sample Output</h2>
+          <pre ng-bind-html="activeProblem.sampleOutput"></pre>
+
+        </div>
+
+      </uib-tab>
+      <uib-tab heading='Status' ng-show="contest.isStart" ng-click="goToStatusList(false)">
+        <div ng-include="'/views/pagination.ejs'"></div>
+
+        <div class='text-center'>
+          <table class='table'>
+            <thead>
+              <th class='col-md-1 text-center'>Problem</th>
+              <th style="width:15px"></th>
+              <th class='col-md-2 text-center'>Result</th>
+              <th class='col-md-2 text-center'>Memory</th>
+              <th class='col-md-2 text-center'>Time</th>
+              <th class='col-md-2 text-center'>Length</th>
+              <th class='col-md-3 text-center'>Submit Time</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <select class="form-control" ng-model="status.problemId" ng-options="problem.value as problem.text for problem in search.problems" ng-change="refreshStatus()">
+                  </select>
+                </td>
+                <td></td>
+
+                <td>
+                  <select class="form-control" ng-model="status.result" ng-options="result.value as result.text for result in search.results" ng-change="refreshStatus()">
+                    <!--option value="-1">All</option-->
+                    <!--option value="result.value" ng-repeat="result in results">{{result.text}}</option-->
+                  </select>
+                </td>
+              </tr>
+              <tr ng-repeat='solution in solutions'>
+                <td class='text-center'>
+                  <a href="javascript:void(0);" ng-click="chooseProblem(getProblemCharId(solution.problemId))">
+                    {{ getProblemCharId(solution.problemId) }}
+                  </a>
+                </td>
+                <td>
+                  <div class='spinner' ng-show="solution.result <= 2"></div>
+                </td>
+                <td class='text-center' ng-class="{'text-success' : solution.result==8, 'text-muted': solution.result <= 2, 'text-danger': solution.result!=8 && solution.result > 2 }">
+                  <a href='javascript:void(0);' ng-click=showCE(solution.solutionId) ng-show="solution.result==3">
+                    {{ solution.resultText }}
+                  </a>
+                  <span ng-hide="solution.result==3">
+                    {{ solution.resultText }}
+                  </span>
+                <td><span ng-show="solution.result > 3">{{ solution.memory }} KB</span></td>
+                <td><span ng-show="solution.result > 3">{{ solution.time }} MS</span></td>
+                <td class='text-center'>
+                  <a href="javascript:void(0);" ng-show='solution.username == username' ng-click='showCode(solution.solutionId)'>{{ solution.codeLength }} B</a>
+                  <span ng-hide='solution.username == username'>{{solution.codeLength}} B</span>
+                </td>
+                <td class='text-center'>{{ solution.submitTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+              </tr>
+            </tbody>
+          </table>
+
+
+        </div>
+      </uib-tab>
+      <uib-tab heading='Rank' ng-show="contest.isStart" ng-click='getRanklist()'>
+        <div class='text-center text-nowrap'>
+          <div class='table-responsive' style='width:{{70*contest.problems.length}}px;'>
+            <table class='table table-bordered' data-show-columns='true' style=".table *{vertical-align:middle;text-align:center}">
+              <thead >
+                <th>#</th>
+                <th style="width:50px;">Name</th>
+                <th style="width:50px;">Nick</th>
+                <th style="width:30px;">Solved</th>
+                <th style="width:30px;">Penalty</th>
+                <th ng-repeat="problem in contest.problems" class='text-center' >
+                  <a href="javascript:void(0);" ng-click="chooseProblem(problem.charId)">{{problem.charId}}</a>
+                </th>
+              </thead>
+              <tbody>
+                <tr ng-repeat="user in ranklist" style="vertical-align:middle;">
+                  <td style="vertical-align:middle;"style="">{{$index + 1}}</td>
+                  <td style="vertical-align:middle;">{{user.username}}</td>
+                  <td style="vertical-align:middle;">{{user.nickname}}</td>
+                  <td style="vertical-align:middle;">{{user.solved}}</td>
+                  <td style="vertical-align:middle;">{{user.penalty}}</td>
+                  <td style="vertical-align:middle;" ng-repeat="problemStatus in user.problems">
+                    <span>
+                      <span style="font-weight:bold;" class='text-danger' ng-show="problemStatus.wa < 0">{{problemStatus.wa}}</span>
+                      <span style="font-weight:bold;color:#0a0;" ng-show="problemStatus.ac != -1">+<span ng-show="problemStatus.wa > 0">{{problemStatus.wa}}</span> </span>
+                    </span>
+                    <br />
+                    <span style="font-size:1.0rem;" class='text-muted' ng-show="problemStatus.ac != -1">{{ formatDuration(problemStatus.ac) }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </uib-tab>
+    </uib-tabset>
+  </div>
+</div>
+
+<script type="text/ng-template" id="submitModal.html">
+<div class="modal-header">
+<h3 class="modal-title">{{problem.charId}} - {{problem.title}}</h3>
+</div>
+<div class="modal-body">
+		<textarea ng-model='srcCode' style="resize:none;width:100%;height:400px;"></textarea>
+</div>
+<div class="modal-footer">
+<button class="btn btn-default" type="button" ng-click="ok()" ng-disabled='isSubmitting'>Submit</button>
+<button class="btn btn-default" type="button" ng-click="cancel()">Cancel</button>
+</div>
+</script>
+
+<script type="text/ng-template" id="codeModal.html">
+<div class="modal-body">
+<pre>{{srcCode}}</pre>
+</div>
+</script>
+
+<script type="text/ng-template" id="codeModal.html">
+<div class="modal-body">
+<pre>{{srcCode}}</pre>
+</div>
+</script>
+
+<script type="text/ng-template" id="ceInfoModal.html">
+<div class="modal-body">
+<pre>{{text}}</pre>
+</div>
+</script>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)'], ['$$','$$']],
+        skipTags: []
+      }
+    });
+  </script>
+  <script type="text/javascript" async src="http://cdn.bootcss.com/mathjax/2.6.1/MathJax.js?config=TeX-AMS_CHTML">
+  </script>

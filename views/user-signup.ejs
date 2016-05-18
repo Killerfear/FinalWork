@@ -1,0 +1,44 @@
+<div ng-include="'/views/navbar.ejs'"></div>
+
+
+<div class='container' style="width:80%;">
+<form name='signupForm' class='form-horizontal'>
+  <div class='danger' ng-show='isError'>{{msg}}</div>
+    <h1 class='form-signin-heading text-center'>User Register</h1>
+    <div class="form-group">
+      <label class='control-label'>Username</label>
+      <input type="text" class="form-control" placeholder="Enter username" ng-model="postData.username" required autofocus>
+      <p class='text-danger' ng-show="postData.username && !checkUsername()">
+        Username may only contain alphanumeric characters or single underscore, and cannot begin or end with a underscore
+      </p>
+    </div>
+
+    <fieldset class="form-group">
+      <label class='control-label'>Password</label>
+      <input type="password" class="form-control" placeholder="Password" ng-model="postData.password" required>
+      <p class='text-danger' ng-show="postData.password && postData.password.length <= 6">
+        Password is too short (minimum is 7 characters)
+      </p>
+    </fieldset>
+
+    <fieldset class="form-group">
+      <label class='control-label'>Repeat Password</label>
+      <input type="password" class="form-control" ng-model="postData.repeatPassword" placeholder="required" required>
+      <p class='text-danger' ng-show="postData.password != postData.repeatPassword">Two passwords are not the same!</p>
+    </fieldset>
+
+    <fieldset class="form-group">
+      <label class='control-label'>Nickname</label>
+      <input type="text" class="form-control" ng-model="postData.nickname" placeholder="Nickname">
+    </fieldset>
+
+    <fieldset class="form-group">
+      <label class="control-label">Email</label>
+      <input type="email" class="form-control" ng-model="postData.email" placeholder="Email">
+    </fieldset>
+
+    <div class='submitBtnStyle'>
+      <button type="submit" class="btn btn-primary" ng-disabled="!checkData()" ng-click="checkData() && submit()">Submit</button>
+    </div>
+  </form>
+</div>

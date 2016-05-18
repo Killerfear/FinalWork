@@ -7,22 +7,31 @@ router.get('/', function(req, res, next) {
 	res.render('index')
 })
 
-/*
-router.get('/user/login', function(req, res, next) {
-	res.render('login', { title: '登录' , pass_error: '' });
-});
+/* Get Problem page. */
+router.get('/problem/list', function(req, res, next) {
+	res.render('index');
+})
 
-router.get('/user/signup', function(req, res, next) {
-	res.render('signup', { title: '注册', msg: [] });
-});
+/* Get Problem Detail */
+router.get('/problem/show/:problemId', function(req, res, next) {
+	res.render('index');
+})
 
-router.get('/problemset/edit', function(req, res, next) {
-	res.render('edit', { title: '题目编辑' });
-});
+/* Get Status List */
+router.get('/status/list', function(req, res, next) {
+	res.render('index');
+})
 
-router.get('/problemset/sample/', function(req, res, next) {
-	res.render('sample', { title: '题目数据' });
-});
-*/
+/* Get Admin Page */
+router.get('/admin/problem', function(req, res, next) {
+	res.render('index');
+})
+
+
+/* Get View Page */
+router.get('/views/:page', function(req, res, next) {
+	res.render(req.params.page);
+})
+
 
 module.exports = router;

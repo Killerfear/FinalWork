@@ -1,0 +1,55 @@
+<div class="container" ng-controller='navCtrl'>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-ex-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#"><span>MyOJ</span></a>
+          </div>
+          <div class="collapse navbar-collapse" id="navbar-ex-collapse">
+            <ul class="nav navbar-left navbar-nav">
+              <li ng-class="{ active : location == 'problem' }">
+                <a href="/#/problem/list">Problem</a>
+              </li>
+              <li ng-class="{ active : location == 'status' }">
+                <a href="/#/status/list">Status</a>
+              </li>
+              <li ng-class="{ active : location == 'contest' }">
+                <a href="/#/contest/list">Contest<br></a>
+              </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li ng-hide='isLogin'>
+                <a href='/#/user/login'>Sign in</a>
+              </li>
+              <li ng-show='isAdmin' class="dropdown">
+                <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                aria-expanded="false">Admin <i class="fa fa-caret-down"></i></a>
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="/#/admin/problem">Problem</a>
+                  </li>
+                  <li>
+                    <a href="/#/admin/contest">Contest</a>
+                  </li>
+                </ul>
+              </li>
+              <li ng-show='isLogin'>
+                <a href="/#/user/profile/">{{username}}</a>
+              </li>
+              <li ng-show='isLogin'>
+                <a href="javascript:void(0);" ng-click="logout()">Logout</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

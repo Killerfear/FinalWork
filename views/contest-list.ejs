@@ -1,0 +1,26 @@
+<div ng-include="'/views/navbar.ejs'"> </div>
+<div ng-include="'/views/pagination.ejs'"></div>
+
+<table class='table'>
+  <thead>
+    <th class='col-sm-1'>#</th>
+    <th class='col-sm-5'>Title</th>
+    <th class='col-sm-3'>Start time</th>
+    <th class='col-sm-2'>Length</th>
+    <th class='col-sm-1'>Type</th>
+    <th class='col-sm-1'>Status</th>
+  </thead>
+  <tbody>
+    <tr ng-repeat="contest in contests">
+      <td >{{contest.contestId}}</td>
+      <td><a href="/#/contest/show/{{contest.contestId}}">{{contest.title}}</td>
+      <td>{{contest.startTime | date: 'yyyy-MM-dd HH:mm:ss'}}</td>
+      <td>{{getDuration(contest.endTime - contest.startTime)}}</td>
+      <td class='text-success' ng-hide="contest.isPrivate">Public</td>
+      <td class='text-danger' ng-show="contest.isPrivate">Private</td>
+      <td ng-class="{'text-danger': contest.status=='Running', 'text-success': contest.status=='Pending', 'text-muted': contest.status=='Finished'}">
+        {{contest.status}}
+      </td>
+    </tr>
+</tbody>
+</table>
