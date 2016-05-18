@@ -85,7 +85,7 @@ void initSyscallsLimits()
 	#ifdef SYS_execve
 		setCallCount(SYS_execve, 1);
 	#endif
-	#ifdef SYS_uname,
+	#ifdef SYS_uname
 		setCallCount(SYS_uname, -1);
 	#endif
 	#ifdef SYS_brk
