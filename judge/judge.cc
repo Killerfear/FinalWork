@@ -70,7 +70,38 @@ const int use_max_time = 0;
 #endif
 
 
-int LANG_CV[256] = {SYS_arch_prctl, SYS_readlink, SYS_execve, SYS_uname, SYS_brk,SYS_access, SYS_fstat, SYS_mmap, SYS_write, SYS_exit_group, 0};
+int LANG_CV[256] = {
+	#ifdef SYS_arch_prctl
+	SYS_arch_prctl,
+	#endif
+	#ifdef SYS_readlink
+	SYS_readlink,
+	#endif
+	#ifdef SYS_execve
+	SYS_execve,
+	#endif
+	#ifdef SYS_uname
+	SYS_uname,
+	#endif
+	#ifdef SYS_brk
+	SYS_brk,
+	#endif
+	#ifdef SYS_access
+	SYS_access,
+	#endif
+	#ifdef SYS_fstat
+	SYS_fstat,
+	#endif
+	#ifdef SYS_mmap
+	SYS_mmap,
+	#endif
+	#ifdef SYS_write
+	SYS_write,
+	#endif
+	#ifdef SYS_exit_group
+	SYS_exit_group,
+	#endif
+	0};
 
 int LANG_CC[256]={-1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 0};
 
