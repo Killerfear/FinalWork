@@ -70,52 +70,43 @@ const int use_max_time = 0;
 #endif
 
 
-int LANG_CV[256] = {
-	#ifdef SYS_arch_prctl
-	SYS_arch_prctl,
-	#endif
-	#ifdef SYS_readlink
-	SYS_readlink,
-	#endif
-	#ifdef SYS_execve
-	SYS_execve,
-	#endif
-	#ifdef SYS_uname
-	SYS_uname,
-	#endif
-	#ifdef SYS_brk
-	SYS_brk,
-	#endif
-	#ifdef SYS_access
-	SYS_access,
-	#endif
-	#ifdef SYS_fstat
-	SYS_fstat,
-	#endif
-	#ifdef SYS_mmap
-	SYS_mmap,
-	#endif
-	#ifdef SYS_write
-	SYS_write,
-	#endif
-	#ifdef SYS_exit_group
-	SYS_exit_group,
-	#endif
-	0};
-
-int LANG_CC[256]={-1, -1, 1, -1, -1, -1, -1, -1, -1, 1, 0};
-
 int call_counter[512];
 
 void initSyscallsLimits()
 {
-	int i;
 	memset(call_counter, 0, sizeof(call_counter));
-	for (i = 0; LANG_CC[i]; i++)
-	{
-		call_counter[LANG_CV[i]] = LANG_CC[i];
-	}
-
+	#define setCallCount(sys, num) call_counter[sys] = num
+	int i;
+	#ifdef SYS_arch_prctl
+		setCallCount(SYS_arch_prctl, -1);
+	#endif
+	#ifdef SYS_readlink
+		setCallCount(SYS_readlink, -1);
+	#endif
+	#ifdef SYS_execve
+		setCallCount(SYS_execve, 1);
+	#endif
+	#ifdef SYS_uname,
+		setCallCount(SYS_uname, -1);
+	#endif
+	#ifdef SYS_brk
+		setCallCount(SYS_brk, -1);
+	#endif
+	#ifdef SYS_access
+		setCallCount(SYS_access, -1);
+	#endif
+	#ifdef SYS_fstat
+		setCallCount(SYS_fstat, -1);
+	#endif
+	#ifdef SYS_mmap
+		setCallCount(SYS_mmap, -1);
+	#endif
+	#ifdef SYS_write
+		setCallCount(SYS_write, -1);
+	#endif
+	#ifdef SYS_exit_group
+		setCallCount(SYS_exit_group, 1);
+	#endif
 }
 
 //getParameters(args, workDir, fullPath, memLimit, timeLimit, judgeType);
